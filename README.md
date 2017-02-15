@@ -1,4 +1,4 @@
-# ${1:MDPGrp7Arduino}
+# MDPGrp7Arduino
 This repo is for MDP Group 7 (Arduino). 
 
 ## Installation
