@@ -90,7 +90,7 @@ void moveForward(double cmDis) {
   
   while (encoderCountLeft < target_Tick ){
     pid = tuneWithPID();
-    md.setSpeeds(350 - pid, 350 + pid);
+    md.setSpeeds(-(200 - pid), -(200 + pid));
   }
   
    md.setBrakes(400, 400);
