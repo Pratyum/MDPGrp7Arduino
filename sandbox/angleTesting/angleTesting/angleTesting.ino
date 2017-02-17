@@ -13,7 +13,7 @@ volatile long encoderCountLeft = 0, encoderCountRight = 0;
 double target_Tick = 0, last_tick = 0; 
 double error = 0, integral = 0;
 
-int pid = 0;
+int pid = 0, incomingByte =0;
 
 
 void setup(){
@@ -31,23 +31,14 @@ void setup(){
 }
 
 void loop(){
-  //delay(3000);
-//  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight));
-  moveForward(120);
-  //rotateRight(810);
-//  duration1 = pulseIn(encoderPin1, HIGH);
-//  duration2 = pulseIn(encoderPin2, HIGH);
-//        if (Serial.available() > 0) {
-//                // read the incoming byte:
-//                int incomingByte = Serial.parseInt();
-//
-//                // say what you got:
-//                Serial.print("I received: ");
-//                Serial.println(incomingByte, DEC);
-//
-//                rotateRight(int(incomingByte));
-//        }
-//  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight));
+  if (Serial.available() > 0) {
+          // read the incoming byte:
+          incomingByte = Serial.parseInt();
+
+          // say what you got:
+          Serial.print("I received: ");
+          Serial.println(incomingByte);
+  }
   delay(1000000);
 }
 
@@ -90,13 +81,27 @@ void moveForward(double cmDis) {
   
   while (encoderCountLeft < target_Tick ){
     pid = tuneWithPID();
-    md.setSpeeds(350 - pid, 350 + pid);
+    md.setSpeeds(200 - pid, 200 + pid);
   }
   
    md.setBrakes(400, 400);
 }
 
 
+void moveBackward(double cmDis) {
+  pid = 0;
+  encoderCountLeft = 0, encoderCountRight = 0;   
+  error = 0, integral = 0, last_tick = 0;
+
+  target_Tick = cmDis * 30.25; // Caliberated to 30.25 ticks per cm 
+  
+  while (encoderCountLeft < target_Tick ){
+    pid = tuneWithPID();
+    md.setSpeeds(-(200 - pid), -(200 + pid));
+  }
+  
+   md.setBrakes(400, 400);
+}
 
 int rotateRight(double angle) {
   pid = 0;
@@ -110,8 +115,24 @@ int rotateRight(double angle) {
 
   while (encoderCountLeft < target_Tick ) {
     pid = tuneWithPID();
-    md.setSpeeds(350 - pid, -(350 + pid));
+    md.setSpeeds(200 - pid, -(200 + pid));
   }
   md.setBrakes(400,400);
 }
 
+int rotateLeft(double angle) {
+  pid = 0;
+  encoderCountRight = 0, encoderCountLeft = 0; 
+  error = 0, integral = 0;
+
+  if (angle <= 90) target_Tick = angle * 4.41;
+  else if (angle <=180 ) target_Tick = angle * 4.51;
+  else if (angle <=360 ) target_Tick = angle * 4.51;
+  else target_Tick = angle * 4.65;
+
+  while (encoderCountLeft < target_Tick ) {
+    pid = tuneWithPID();
+    md.setSpeeds(-(200 - pid), (200 + pid));
+  }
+  md.setBrakes(400,400);
+}
