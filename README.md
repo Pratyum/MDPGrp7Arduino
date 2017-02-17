@@ -11,6 +11,9 @@ http://playground.arduino.cc/Code/PIDLibrary
 https://github.com/br3ttb/Arduino-PID-Library/
 
 
+### IR Sensor Library
+http://playground.arduino.cc/Main/SharpIR
+
 ## Usage
 TODO: Write usage instructions
 
