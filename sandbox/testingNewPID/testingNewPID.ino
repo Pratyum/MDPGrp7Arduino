@@ -121,7 +121,7 @@ int rotateRight(double angle) {
   else target_Tick = angle * 4.65;
 
   while (encoderCountLeft < target_Tick ) {
-    pid = tuneWithPID();
+    pid = tuneWithPID2();
     md.setSpeeds(200 - pid, -(200 + pid));
   }
   md.setBrakes(400,400);
