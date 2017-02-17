@@ -1,8 +1,5 @@
 #include "DualVNH5019MotorShield.h"
 #include "PinChangeInt.h"
-#include <PID_v1.h>
-
-
 DualVNH5019MotorShield md;
 
 #define pinEncoderL 3
@@ -19,7 +16,6 @@ double lastInput = 0;
 double ITerm =0;
 
 double pid = 0;
-PID myPID(&encoderCountRight, &pid, &encoderCountLeft, 15, 0, 0, DIRECT);
 
 
 void setup(){
@@ -121,7 +117,7 @@ int rotateRight(double angle) {
   else target_Tick = angle * 4.65;
 
   while (encoderCountLeft < target_Tick ) {
-    pid = tuneWithPID();
+    pid = tuneWithPID2();
     md.setSpeeds(200 - pid, -(200 + pid));
   }
   md.setBrakes(400,400);
