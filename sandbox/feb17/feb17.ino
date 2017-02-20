@@ -18,21 +18,21 @@ void setup() {
 }
 
 void loop() {
-  delay(300);   
+  delay(300);
 
-  double pepe1=millis();  // takes the time before the loop on the library begins
+  //double pepe1=millis();  // takes the time before the loop on the library begins
 //  Serial.print(sensor1.distance());
 //  Serial.print(", ");
 //  Serial.print(sensor2.distance());
 //  Serial.print(", ");
-  Serial.print(calibrateSensorValue(sensor3.distance()));
+  Serial.print(sensor3.distance());
 //  Serial.print(", ");
 //  Serial.print(sensor4.distance());
 //  Serial.print(", ");
 //  Serial.print(sensor5.distance());
   Serial.println();
 
-  double pepe2=millis()-pepe1;  // the following gives you the time taken to get the measurement
+  //double pepe2=millis()-pepe1;  // the following gives you the time taken to get the measurement
   
   //Serial.print("Time taken (ms): ");
   //Serial.println(pepe2);
