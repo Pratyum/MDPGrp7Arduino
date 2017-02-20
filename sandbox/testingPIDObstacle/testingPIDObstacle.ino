@@ -9,6 +9,7 @@ DualVNH5019MotorShield md;
 #define pinEncoderL 3
 #define pinEncoderR 5
 #define pinSwitch 8
+#define MODEL 1080 // 1080 (Short), 20150 (Long)
 
 SharpIR sensor1(pinSensor1, 200, 99, MODEL);
 SharpIR sensor2(pinSensor2, 200, 99, MODEL);
@@ -23,6 +24,7 @@ double lastInput = 0;
 double ITerm =0;
 
 double pid = 0;
+bool inObstacleAvoid = false;
 
 
 void setup(){
@@ -40,7 +42,7 @@ void setup(){
 }
 
 void loop(){
-  moveForward(120);
+  moveForward(100);
   delay(1000000);
 }
 
@@ -98,6 +100,7 @@ void moveForward(double cmDis) {
       rotateRight(90);
       moveForward(20);
       rotateLeft(90);
+      inObstacleAvoid = false;
       target_Tick = last_target_tick - (10*30.25);
     }
   }
@@ -184,7 +187,11 @@ double tuneWithPID2(){
 
 bool checkForObstcle(){
   //TODO : Add the third sensor
+  if(inObstacleAvoid){
+    return false;
+  }
   if(calibrateSensorValue(sensor1.distance())<=30 || calibrateSensorValue(sensor2.distance())<=30 ) {
+    inObstacleAvoid = true;
     return true;
   }
   return false;

@@ -7,10 +7,10 @@
 #define pinSensor5 5
 #define MODEL 1080 // 1080 (Short), 20150 (Long)
 
-//SharpIR sensor1(pinSensor1, 100, 95, MODEL);
-//SharpIR sensor2(pinSensor2, 200, 99, MODEL);
-SharpIR sensor3(pinSensor3, 200, 99, MODEL);
-SharpIR sensor4(pinSensor4, 200, 99, MODEL);
+SharpIR sensor1(pinSensor1, 100, 95, MODEL);
+SharpIR sensor2(pinSensor2, 200, 99, MODEL);
+//SharpIR sensor3(pinSensor3, 200, 99, MODEL);
+//SharpIR sensor4(pinSensor4, 200, 99, MODEL);
 //SharpIR sensor5(pinSensor5, 100, 95, MODEL);
 
 void setup() {
@@ -21,14 +21,14 @@ void loop() {
   delay(300);   
 
   double pepe1=millis();  // takes the time before the loop on the library begins
-//  Serial.print(sensor1.distance());
-//  Serial.print(", ");
-//  Serial.print(sensor2.distance());
-//  Serial.print(", ");
-  Serial.print(sensor3.distance());
- Serial.print(", ");
- Serial.print(sensor4.distance());
- Serial.print(", ");
+  Serial.print(sensor1.distance());
+  Serial.print(", ");
+  Serial.print(sensor2.distance());
+  Serial.print(", ");
+//  Serial.print(sensor3.distance());
+// Serial.print(", ");
+// Serial.print(sensor4.distance());
+// Serial.print(", ");
 //  Serial.print(sensor5.distance());
   Serial.println();
 
