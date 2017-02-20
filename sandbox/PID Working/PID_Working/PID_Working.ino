@@ -1,11 +1,20 @@
 #include "DualVNH5019MotorShield.h"
 #include "PinChangeInt.h"
+#include "SharpIR.h"
 
 DualVNH5019MotorShield md;
 
 #define pinEncoderL 3
 #define pinEncoderR 5
 #define pinSwitch 8
+#define sensorFrontRight 1
+#define sensorFrontLeft 2
+
+#define MODEL 1080 // 1080 (Short), 20150 (Long)
+
+SharpIR sensor1(sensorFrontRight, 200, 99, MODEL);
+SharpIR sensor2(sensorFrontLeft, 200, 99, MODEL);
+
 
 unsigned long duration1, duration2;
 volatile long encoderCountLeft = 0, encoderCountRight = 0;
@@ -34,26 +43,6 @@ void loop(){
   //delay(3000);
 //  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight));
   moveForward(120);
-  delay(500);
-  moveBackward(120);
-  delay(500);
-  rotateLeft(90);
-  delay(250);
-  rotateRight(90);
-  //rotateRight(810);
-//  duration1 = pulseIn(encoderPin1, HIGH);
-//  duration2 = pulseIn(encoderPin2, HIGH);
-//        if (Serial.available() > 0) {
-//                // read the incoming byte:
-//                int incomingByte = Serial.parseInt();
-//
-//                // say what you got:
-//                Serial.print("I received: ");
-//                Serial.println(incomingByte, DEC);
-//
-//                rotateRight(int(incomingByte));
-//        }
-//  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight));
   delay(1000000);
 }
 
@@ -96,7 +85,9 @@ void moveForward(double cmDis) {
   
   while (encoderCountLeft < target_Tick ){
     pid = tuneWithPID();
-    md.setSpeeds(200 - pid, 200 + pid);
+    if(!checkForObstcle()){  
+      md.setSpeeds(200 - pid, 200 + pid);
+    }
   }
   
    md.setBrakes(400, 400);
@@ -151,3 +142,40 @@ int rotateLeft(double angle) {
   }
   md.setBrakes(400,400);
 }
+
+
+bool checkForObstcle(){
+  //TODO : Add the third sensor
+  Serial.print(sensor1.distance());
+  Serial.print(",");
+  Serial.println(sensor2.distance());
+  if(calibrateSensorValue(sensor1.distance())<=30 || calibrateSensorValue(sensor2.distance())<=30 ) {
+    Serial.println("Obstacle detected");
+    return true;
+  }
+  return false;
+}
+
+int calibrateSensorValue(int val){
+  /**
+   * 20cm distance has the most accurate reading
+   * with each increment of 10cm, there will be 2cm additional increment in readings
+   */
+   Serial.println("val"+ String(val));
+  return (val + 4)/1.2;
+}
+
+int obstaclePosition(int val){
+  /**
+   * range of values are from 
+   * (1.2n - 4) - (4 + 0.1n) to (1.2n - 4) + (4 + 0.1n)
+   */
+  int i;
+  for (i = 1; i <= 10; i++){
+    if (val <= (13 * i)) {
+      return i;
+    }
+  }
+  return 0;
+}
+

@@ -191,6 +191,7 @@ bool checkForObstcle(){
     return false;
   }
   if(calibrateSensorValue(sensor1.distance())<=30 || calibrateSensorValue(sensor2.distance())<=30 ) {
+    Serial.println("Obstacle detected");
     inObstacleAvoid = true;
     return true;
   }
