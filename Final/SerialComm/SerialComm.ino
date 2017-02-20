@@ -4,10 +4,19 @@ void setup() {
 
 void loop()
 {
-  String tmp = "";
-  while(Serial.available() == 0);
-  Serial.setTimeout(10);
-  tmp = Serial.readString();
-
-  Serial.println(tmp);
+  /**
+   * return string that is received
+   */
+  //  String tmp = "";
+  //  while(Serial.available() == 0);
+  //  Serial.setTimeout(10);
+  //  tmp = Serial.readString();
+  //
+  //  Serial.println(tmp);
+  
+  /**
+   * return char with ascii + 1
+   */
+  while (Serial.available() == 0);
+  Serial.println(char(Serial.read()+1));
 }
