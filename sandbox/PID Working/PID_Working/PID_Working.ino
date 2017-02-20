@@ -13,7 +13,6 @@ DualVNH5019MotorShield md;
 #define MODEL 1080 // 1080 (Short), 20150 (Long)
 
 SharpIR sensor1(sensorFrontRight, 200, 99, MODEL);
-//SharpIR sensor2(sensorFrontLeft, 200, 99, MODEL);
 enum obstacleStates {
   LEFT_ROW,
   CENTER_ROW,
@@ -22,6 +21,7 @@ enum obstacleStates {
 };
 
 obstacleStates sensorState = NO_OBSTACLE;
+SharpIR sensor2(sensorFrontLeft, 200, 99, MODEL);
 
 unsigned long duration1, duration2;
 volatile long encoderCountLeft = 0, encoderCountRight = 0;
@@ -51,7 +51,6 @@ void loop() {
   //  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight));
   int distance = 120;
   moveLookingForward(distance);
-
   delay(1000000);
 }
 void moveLookingForward(int distance) {
@@ -124,7 +123,9 @@ void moveForward(double cmDis) {
 
   while (encoderCountLeft < target_Tick ) {
     pid = tuneWithPID();
-    md.setSpeeds(200 - pid, 200 + pid);
+    if(!checkForObstcle()){  
+      md.setSpeeds(200 - pid, 200 + pid);
+    }
   }
 
   md.setBrakes(400, 400);
@@ -233,5 +234,4 @@ void readFrontSensors() {
   //    }
 
 }
-
 
