@@ -22,7 +22,8 @@ enum obstacleStates {
   LEFT_ROW,
   CENTER_ROW,
   RIGHT_ROW,
-  NO_OBSTACLE
+  NO_OBSTACLE,
+  WALL
 };
 
 obstacleStates sensorState = NO_OBSTACLE;
@@ -50,25 +51,28 @@ void setup() {
 void loop() {
   //delay(3000);
   //  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight));
-  int distance = 120;
-  moveLookingForward(distance);
+   int distance = 120;
+   moveLookingForward(distance);
+//  readFrontSensors();
 //  rotateLeft(90);
 //  delay(5000);
 //  rotateRight(90);
+//  Serial.println(readFrontSensors());
   delay(1000000);
 }
+
 void moveLookingForward(int distance) {
   //int left_offset =0, right_offset =0;
   int offset = 0, obstaclePosition = 0, distAfterObstacle = 0;
   
   while (distance > 0) {
     obstaclePosition = readFrontSensors();
-    if (distance < (obstaclePosition * 10)) {
+    if (distance <= (obstaclePosition * 10)) {
       moveForward(distance);
       distance = 0;
       break;
     }
-    if (offset != 0 && distAfterObstacle >= 40) {
+    if ((offset != 0) && (distAfterObstacle >= 40)) {
         if (offset > 0) {
           rotateLeft(90);
           while (offset > 0) {
@@ -85,6 +89,7 @@ void moveLookingForward(int distance) {
           }
           rotateLeft(90);
         }
+        continue;
     }
     //    readSideSensors();
     switch (sensorState) {
@@ -98,6 +103,7 @@ void moveLookingForward(int distance) {
         break;
         
       case LEFT_ROW:
+        Serial.println("Left Obstacle");
         moveForward((obstaclePosition - 1) * 10);
         rotateRight(90);
         moveForward(10);
@@ -109,6 +115,7 @@ void moveLookingForward(int distance) {
         break;
         
       case RIGHT_ROW:
+        Serial.println("Right Obstacle");
         moveForward((obstaclePosition - 1) * 10);
         rotateLeft(90);
         moveForward(10);
@@ -120,6 +127,7 @@ void moveLookingForward(int distance) {
         break;
         
       case CENTER_ROW:
+        Serial.println("Center Obstacle");
         moveForward((obstaclePosition - 1) * 10);
         rotateRight(90);
         moveForward(20);
@@ -129,6 +137,9 @@ void moveLookingForward(int distance) {
         distance -= (obstaclePosition * 10);
         offset += 2;
         break;
+      case WALL:
+        moveForward((obstaclePosition-1)*10);
+
     }
   }
 
@@ -158,7 +169,7 @@ void incRight() {
 }
 
 double tuneWithPID() {
-  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
+//  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
   double kp, ki, kd, p, i, d;
 
   kp = 15; // trial and error
@@ -243,21 +254,6 @@ int rotateLeft(double angle) {
   md.setBrakes(400, 400);
 }
 
-
-bool checkForObstacle() {
-  //TODO : Add the third sensor
-  Serial.print(calibrateSensorValue(sensor1.distance()));
-  //  Serial.print(",");
-  //  Serial.println(sensor2.distance());
-  Serial.println();
-  if (calibrateSensorValue(sensor1.distance()) <= 30 && calibrateSensorValue(sensor1.distance()) > 0) {
-    Serial.println("Obstacle detected");
-    return true;
-  }
-  return false;
-}
-
-
 int calibrateSensorValue(int val) {
   /**
    * 20cm distance has the most accurate reading
@@ -281,15 +277,42 @@ int obstaclePosition(int val) {
   return 0;
 }
 int readFrontSensors() {
-  if (calibrateSensorValue(sensor1.distance()) <= 40 && calibrateSensorValue(sensor1.distance()) >= 0 ) {
-    sensorState = RIGHT_ROW;
-    return obstaclePosition(sensor1.distance());
-  }else if(calibrateSensorValue(sensor2.distance()) <= 40 && calibrateSensorValue(sensor2.distance()) >= 0){
-    sensorState = CENTER_ROW;
-    return obstaclePosition(sensor2.distance());
-  }else if(calibrateSensorValue(sensor3.distance()) <= 40 && calibrateSensorValue(sensor3.distance()) >= 0){
+  double time = millis();
+  double sensor1Val=0,sensor2Val=0,sensor3Val=0;
+  sensor1Val = calibrateSensorValue(sensor1.distance());
+  sensor2Val = calibrateSensorValue(sensor2.distance());
+  sensor3Val = calibrateSensorValue(sensor3.distance());
+  double end_time = millis();
+  Serial.print("Time Taken: ");
+  Serial.print(end_time-time);
+  Serial.println();
+  Serial.println("Values(1,2,3):"+ String(sensor1Val)+","+ String(sensor2Val)+","+ String(sensor3Val));
+  Serial.println("ObstacleValues(1,2,3):"+ String(obstaclePosition(sensor1Val))+","+ String(obstaclePosition(sensor2Val))+","+ String(obstaclePosition(sensor3Val)));
+  
+  if ((abs(sensor1Val-sensor2Val)<=5)&&(abs(sensor2Val-sensor3Val)<=5)&&(abs(sensor3Val-sensor1Val)<=5)&&(sensor1Val<=40)){
+    sensorState = WALL;
+    return obstaclePosition(sensor1Val);
+  }else if ((sensor1Val <= 35) && ( sensor1Val >= 0 )) {
     sensorState = LEFT_ROW;
-    return obstaclePosition(sensor3.distance());
+    Serial.print("LeftRow: ");
+    // Serial.print(calibrateSensorValue(sensor1.distance()));
+    // Serial.print(", ");
+    // Serial.println(sensor1.distance());
+    return obstaclePosition(sensor1Val);
+  }else if((sensor2Val <= 30) && ( sensor2Val >= 0 )){
+    sensorState = CENTER_ROW;
+    Serial.print("CenterRow: ");
+    // Serial.print(calibrateSensorValue(sensor2.distance()));
+    // Serial.print(", ");
+    // Serial.println(sensor2.distance());
+    return obstaclePosition(sensor2Val);
+  }else if((sensor3Val <= 30) && ( sensor3Val >= 0 )){
+    sensorState = RIGHT_ROW;
+    Serial.print("RightRow: ");
+    // Serial.print(calibrateSensorValue(sensor3.distance()));
+    // Serial.print(", ");
+    // Serial.println(sensor3.distance());
+    return obstaclePosition(sensor3Val);
   }else{
     sensorState = NO_OBSTACLE;
     return 0;
