@@ -52,11 +52,10 @@ void loop() {
   //delay(3000);
   //  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight));
    int distance = 120;
-   moveLookingForward(distance);
+    moveLookingForward(distance);
+//   moveForward(distance);
 //  readFrontSensors();
 //  rotateLeft(90);
-//  delay(5000);
-//  rotateRight(90);
 //  Serial.println(readFrontSensors());
   delay(1000000);
 }
@@ -169,10 +168,10 @@ void incRight() {
 }
 
 double tuneWithPID() {
-//  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
+  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
   double kp, ki, kd, p, i, d;
 
-  kp = 15; // trial and error
+  kp = 14.3; // trial and error
   ki = 0;
   kd = 0;
 
@@ -225,7 +224,7 @@ int rotateRight(double angle) {
   encoderCountRight = 0, encoderCountLeft = 0;
   error = 0, integral = 0;
 
-  if (angle <= 90) target_Tick = angle * 4.47;
+  if (angle <= 90) target_Tick = angle * 4.423;
   else if (angle <= 180 ) target_Tick = angle * 4.62;
   else if (angle <= 360 ) target_Tick = angle * 4.675;
   else target_Tick = angle * 4.65;
@@ -242,7 +241,7 @@ int rotateLeft(double angle) {
   encoderCountRight = 0, encoderCountLeft = 0;
   error = 0, integral = 0;
 
-  if (angle <= 90) target_Tick = angle * 4.45;
+  if (angle <= 90) target_Tick = angle * 4.424;
   else if (angle <= 180 ) target_Tick = angle * 4.51;
   else if (angle <= 360 ) target_Tick = angle * 4.51;
   else target_Tick = angle * 4.65;

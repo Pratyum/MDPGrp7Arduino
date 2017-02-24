@@ -7,9 +7,9 @@ DualVNH5019MotorShield md;
 #define pinEncoderL 3
 #define pinEncoderR 5
 #define pinSwitch 8
-#define sensorFrontRight 1
-#define sensorFrontLeft 2
-#define sensorFrontCenter 3
+#define sensorFrontRight 3
+#define sensorFrontLeft 1
+#define sensorFrontCenter 2
 
 
 #define MODEL 1080 // 1080 (Short), 20150 (Long)
@@ -198,11 +198,12 @@ void incRight() {
   encoderCountRight++;
 }
 
+
 double tuneWithPID() {
-//  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
+  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
   double kp, ki, kd, p, i, d;
 
-  kp = 15; // trial and error
+  kp = 14.3; // trial and error
   ki = 0;
   kd = 0;
 
@@ -247,7 +248,6 @@ void moveBackward(double cmDis) {
     pid = tuneWithPID();
     md.setSpeeds(-(200 - pid), -(200 + pid));
   }
-
   md.setBrakes(400, 400);
 }
 
@@ -256,7 +256,7 @@ int rotateRight(double angle) {
   encoderCountRight = 0, encoderCountLeft = 0;
   error = 0, integral = 0;
 
-  if (angle <= 90) target_Tick = angle * 4.47;
+  if (angle <= 90) target_Tick = angle * 4.423;
   else if (angle <= 180 ) target_Tick = angle * 4.62;
   else if (angle <= 360 ) target_Tick = angle * 4.675;
   else target_Tick = angle * 4.65;
@@ -266,7 +266,6 @@ int rotateRight(double angle) {
     md.setSpeeds(200 - pid, -(200 + pid));
   }
   md.setBrakes(400, 400);
-  delay(100);
 }
 
 int rotateLeft(double angle) {
@@ -274,7 +273,7 @@ int rotateLeft(double angle) {
   encoderCountRight = 0, encoderCountLeft = 0;
   error = 0, integral = 0;
 
-  if (angle <= 90) target_Tick = angle * 4.45;
+  if (angle <= 90) target_Tick = angle * 4.424;
   else if (angle <= 180 ) target_Tick = angle * 4.51;
   else if (angle <= 360 ) target_Tick = angle * 4.51;
   else target_Tick = angle * 4.65;
@@ -284,9 +283,7 @@ int rotateLeft(double angle) {
     md.setSpeeds(-(200 - pid), (200 + pid));
   }
   md.setBrakes(400, 400);
-  delay(100);
 }
-
 
 bool checkForObstcle() {
   //TODO : Add the third sensor
