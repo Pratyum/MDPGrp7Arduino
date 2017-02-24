@@ -22,9 +22,9 @@ void loop()
    * return char with ascii + 1
    */
   //*
-  if (Serial.available() != 0){
+  if (Serial.available() != 0){ 
     Serial.println(char(Serial.read()+1));
-    blinkLED();
+//    blinkLED();
   }
   //*/
 }
