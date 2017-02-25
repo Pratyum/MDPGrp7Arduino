@@ -6,9 +6,17 @@ DualVNH5019MotorShield md;
 
 #define pinEncoderL 3
 #define pinEncoderR 5
+<<<<<<< HEAD
 #define sensorFrontLeft 1
 #define sensorFrontCenter 2
 #define sensorFrontRight 3
+=======
+#define pinSwitch 8
+#define sensorFrontRight 3
+#define sensorFrontLeft 1
+#define sensorFrontCenter 2
+
+>>>>>>> origin/master
 
 #define MODEL 1080 // 1080 (Short), 20150 (Long)
 
@@ -196,8 +204,13 @@ void incRight() {
   encoderCountRight++;
 }
 
+
 double tuneWithPID() {
+<<<<<<< HEAD
   //Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
+=======
+  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
+>>>>>>> origin/master
   double kp, ki, kd, p, i, d;
 
   kp = 14.3; // trial and error
@@ -263,7 +276,10 @@ int rotateRight(double angle) {
     md.setSpeeds(200 - pid, -(200 + pid));
   }
   md.setBrakes(400, 400);
+<<<<<<< HEAD
   delay(200);
+=======
+>>>>>>> origin/master
 }
 
 int rotateLeft(double angle) {
@@ -281,9 +297,26 @@ int rotateLeft(double angle) {
     md.setSpeeds(-(200 - pid), (200 + pid));
   }
   md.setBrakes(400, 400);
+<<<<<<< HEAD
   delay(200);
 }
 
+=======
+}
+
+bool checkForObstcle() {
+  //TODO : Add the third sensor
+  Serial.print(calibrateSensorValue(sensor1.distance()));
+  //  Serial.print(",");
+  //  Serial.println(sensor2.distance());
+  Serial.println();
+  if (calibrateSensorValue(sensor1.distance()) <= 30 && calibrateSensorValue(sensor1.distance()) > 0) {
+    Serial.println("Obstacle detected");
+    return true;
+  }
+  return false;
+}
+>>>>>>> origin/master
 
 
 int calibrateSensorValue(int val) {
