@@ -6,17 +6,15 @@ DualVNH5019MotorShield md;
 
 #define pinEncoderL 3
 #define pinEncoderR 5
-#define pinSwitch 8
-#define sensorFrontRight 1
-#define sensorFrontLeft 2
-#define sensorFrontCenter 3
-
+#define sensorFrontLeft 1
+#define sensorFrontCenter 2
+#define sensorFrontRight 3
 
 #define MODEL 1080 // 1080 (Short), 20150 (Long)
 
-SharpIR sensor1(sensorFrontRight, 200, 99, MODEL);
-SharpIR sensor2(sensorFrontLeft, 200, 99, MODEL);
-SharpIR sensor3(sensorFrontCenter, 200, 99, MODEL);
+SharpIR sensor1(sensorFrontLeft, 200, 99, MODEL);
+SharpIR sensor2(sensorFrontCenter, 200, 99, MODEL);
+SharpIR sensor3(sensorFrontRight, 200, 99, MODEL);
 
 enum obstacleStates {
   LEFT_ROW,
@@ -43,22 +41,14 @@ void setup() {
   md.init();
   pinMode(pinEncoderL, INPUT);
   pinMode(pinEncoderR, INPUT);
-  pinMode(pinSwitch, INPUT);
 
   PCintPort::attachInterrupt(pinEncoderL, incLeft, RISING);
   PCintPort::attachInterrupt(pinEncoderR, incRight, RISING);
-
-  //md.setSpeeds(100, 100);
 }
 
 void loop() {
-  //delay(3000);
-  //  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight));
-  int distance = 120;
+  int distance = 100;
   moveLookingForward(distance);
-//  rotateLeft(90);
-//  delay(5000);
-//  rotateRight(90);
   delay(1000000);
 }
 void moveLookingForward(int distance) {
@@ -71,19 +61,21 @@ void moveLookingForward(int distance) {
     switch (sensorState) {
       case NO_OBSTACLE:
         Serial.println("No Obstacle");
-        while(left_offset != 0 || right_offset != 0){
-          if (left_offset != 0){
-            rotateLeft(90);
+        if (left_offset != 0){
+          rotateLeft(90);
+          while (left_offset != 0) {
             moveForward(10);
-            rotateRight(90);
-            left_offset--; 
+            left_offset--;
           }
-          if (right_offset != 0){
-            rotateRight(90);
+          rotateRight(90);
+        }
+        if (right_offset != 0){
+          rotateRight(90);
+          while (right_offset != 0) {
             moveForward(10);
-            rotateLeft(90);
             right_offset--;
           }
+          rotateLeft(90);
         }
         moveForward(10);
         distance -= 10;
@@ -178,14 +170,20 @@ void moveLookingForward(int distance) {
 
 boolean check_if_can_avoid(){
     //check if wall is at least 2 grids ahead
-    if (obstaclePosition(sensor1.distance())<2 || 
-        obstaclePosition(sensor2.distance())<2 || 
-        obstaclePosition(sensor3.distance())<2  )
+    int dist1 = sensor1.distance();
+    int dist2 = sensor2.distance();
+    int dist3 = sensor3.distance();
+    
+    if (obstaclePosition(dist1) == 1 || 
+        obstaclePosition(dist2) == 1 || 
+        obstaclePosition(dist3) == 1  )
     {
         //wall here go by alternative
+        Serial.println("false");
         return false;
     }else{
         //no wall, go by conventional way
+        Serial.println("true");
         return true;
     }
 }
@@ -199,10 +197,10 @@ void incRight() {
 }
 
 double tuneWithPID() {
-//  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
+  //Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
   double kp, ki, kd, p, i, d;
 
-  kp = 15; // trial and error
+  kp = 14.3; // trial and error
   ki = 0;
   kd = 0;
 
@@ -225,7 +223,7 @@ void moveForward(double cmDis) {
   encoderCountLeft = 0, encoderCountRight = 0;
   error = 0, integral = 0, last_tick = 0;
 
-  target_Tick = cmDis * 30.25; // Caliberated to 30.25 ticks per cm
+  target_Tick = cmDis * 29; // Caliberated to 30.25 ticks per cm
 
   while (encoderCountLeft < target_Tick ) {
     pid = tuneWithPID();
@@ -241,13 +239,12 @@ void moveBackward(double cmDis) {
   encoderCountLeft = 0, encoderCountRight = 0;
   error = 0, integral = 0, last_tick = 0;
 
-  target_Tick = cmDis * 30.25; // Caliberated to 30.25 ticks per cm
+  target_Tick = cmDis * 29; // Caliberated to 30.25 ticks per cm
 
   while (encoderCountLeft < target_Tick ) {
     pid = tuneWithPID();
     md.setSpeeds(-(200 - pid), -(200 + pid));
   }
-
   md.setBrakes(400, 400);
 }
 
@@ -256,7 +253,7 @@ int rotateRight(double angle) {
   encoderCountRight = 0, encoderCountLeft = 0;
   error = 0, integral = 0;
 
-  if (angle <= 90) target_Tick = angle * 4.47;
+  if (angle <= 90) target_Tick = angle * 4.423;
   else if (angle <= 180 ) target_Tick = angle * 4.62;
   else if (angle <= 360 ) target_Tick = angle * 4.675;
   else target_Tick = angle * 4.65;
@@ -266,7 +263,7 @@ int rotateRight(double angle) {
     md.setSpeeds(200 - pid, -(200 + pid));
   }
   md.setBrakes(400, 400);
-  delay(100);
+  delay(200);
 }
 
 int rotateLeft(double angle) {
@@ -274,7 +271,7 @@ int rotateLeft(double angle) {
   encoderCountRight = 0, encoderCountLeft = 0;
   error = 0, integral = 0;
 
-  if (angle <= 90) target_Tick = angle * 4.45;
+  if (angle <= 90) target_Tick = angle * 4.424;
   else if (angle <= 180 ) target_Tick = angle * 4.51;
   else if (angle <= 360 ) target_Tick = angle * 4.51;
   else target_Tick = angle * 4.65;
@@ -284,22 +281,9 @@ int rotateLeft(double angle) {
     md.setSpeeds(-(200 - pid), (200 + pid));
   }
   md.setBrakes(400, 400);
-  delay(100);
+  delay(200);
 }
 
-
-bool checkForObstcle() {
-  //TODO : Add the third sensor
-  Serial.print(calibrateSensorValue(sensor1.distance()));
-  //  Serial.print(",");
-  //  Serial.println(sensor2.distance());
-  Serial.println();
-  if (calibrateSensorValue(sensor1.distance()) <= 30 && calibrateSensorValue(sensor1.distance()) > 0) {
-    Serial.println("Obstacle detected");
-    return true;
-  }
-  return false;
-}
 
 
 int calibrateSensorValue(int val) {
@@ -324,6 +308,7 @@ int obstaclePosition(int val) {
   }
   return 0;
 }
+
 void readFrontSensors() {
   //Serial.println(String(calibrateSensorValue(sensor1.distance()))+","+String(calibrateSensorValue(sensor2.distance()))+","+String(calibrateSensorValue(sensor3.distance())));
   int sensor1val = 0, sensor2val = 0, sensor3val = 0;
@@ -339,27 +324,17 @@ void readFrontSensors() {
   }else{
     sensorState = NO_OBSTACLE;
   }
-//  if (((calibrateSensorValue(sensor1.distance())-calibrateSensorValue(sensor2.distance())) < 5)&&((calibrateSensorValue(sensor2.distance())-calibrateSensorValue(sensor3.distance())) < 5)&&((calibrateSensorValue(sensor3.distance())-calibrateSensorValue(sensor1.distance())) < 5)){
-//    if (sensorState != NO_OBSTACLE){
-//      sensorState = WALL;
-//    }
-//  }
+  
+  if (obstaclePosition(sensor1val) == obstaclePosition(sensor2val) == obstaclePosition(sensor3val)){
+    if (sensorState != NO_OBSTACLE){
+      sensorState = WALL;
+    }
+  }
   //TODO: Check Right Sensor Values
   //TODO: Check Center Sensor Values
   //    if(caliberateSensorValue(sensor3.distance()) <= 30 && caliberateSensorValue(sensor3.distance())){
   //      sensorState = CENTER_ROW;
   //    }
-
-}
-
-bool isClearSide(){
-  if (calibrateSensorValue(sensor1.distance()) <= 20 && calibrateSensorValue(sensor1.distance()) >= 0 ) {
-    return false;
-  }
-  if(calibrateSensorValue(sensor2.distance()) <= 20 && calibrateSensorValue(sensor2.distance()) >= 0){
-    return false;
-  }
-  return true;
 
 }
 
