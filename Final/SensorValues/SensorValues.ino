@@ -17,6 +17,19 @@ SharpIR sensor0(pinSensor0, 200, 99, MODEL_LONG);
 //SharpIR sensor4(pinSensor4, 200, 99, MODEL_SHORT);
 //SharpIR sensor5(pinSensor5, 200, 99, MODEL_SHORT);
 
+/**
+ * ===== For mapping sensor values =====
+ * key in values returned from sensor
+ * arrMapping0 is for long-range
+ * long-range (start from 20); short-range (start from 10)
+ */
+int arrMapping0[] = {20, 27, 37, 47, 58, 66, 78, 91, 100, 120, 130, 140, 150};
+int arrMapping1[] = {10, 20, 30, 40, 50, 60, 70, 80};
+int arrMapping2[] = {10, 20, 30, 40, 50, 60, 70, 80};
+int arrMapping3[] = {10, 20, 30, 40, 50, 60, 70, 80};
+int arrMapping4[] = {10, 20, 30, 40, 50, 60, 70, 80};
+int arrMapping5[] = {10, 20, 30, 40, 50, 60, 70, 80};
+
 void setup() {
   Serial.begin(9600);
 }
@@ -32,17 +45,9 @@ void loop() {
 //  int dist4 = sensor4.distance();
 //  int dist5 = sensor5.distance();
   
-  Serial.print(dist0);
+  Serial.println(dist0);
 //  Serial.print(", ");
-  long value1 = map(dist0,20,27,20,30);
-  long value2 = map(dist0,27,37,30,40);
-  long value3 = map(dist0,37,47,40,50);
-  long value4 = map(dist0,47,57,50,60);
-  long value5 = map(dist0,57,69,60,70);
-  long value6 = map(dist0,69,79,70,80);
-  long value7 = map(dist0,79,81,70,80);
-  long value8 = map(dist0,81,91,80,90);
-  Serial.println("Values are : " + String(value1)+","+ String(value2)+","+ String(value3)+","+String(value4)+","+String(value5)+","+String(value6)+","+String(value7)+","+String(value8));
+  Serial.println("Mapped value is: " + String(calibrateSensorValue(dist0, 0)));
 //  Serial.print(obstaclePosition(dist0));
 //  Serial.print(", ");
 //  Serial.print(dist1);
@@ -72,25 +77,35 @@ void loop() {
 //  Serial.println(pepe2);
 }
 
-int calibrateSensorValue(int val){
-  /**
-   * 20cm distance has the most accurate reading
-   * with each increment of 10cm, there will be 2cm additional increment in readings
-   */
-  return (val + 4)/1.2;
+int calibrateSensorValue(int dist, int n){
+  int *arr;
+  int i, len;
+
+  //int dist = sensor.distance();
+  
+  switch(n){
+    case 0: arr = arrMapping0; len = sizeof(arrMapping0)/sizeof(*arr); break;
+    case 1: arr = arrMapping1; len = sizeof(arrMapping1)/sizeof(*arr); break;
+    case 2: arr = arrMapping2; len = sizeof(arrMapping2)/sizeof(*arr); break;
+    case 3: arr = arrMapping3; len = sizeof(arrMapping3)/sizeof(*arr); break;
+    case 4: arr = arrMapping4; len = sizeof(arrMapping4)/sizeof(*arr); break;
+    case 5: arr = arrMapping5; len = sizeof(arrMapping5)/sizeof(*arr); break;
+    default: return -1;
+  }
+
+  for (i = 0; i < len; i++){
+    if (dist < arr[i]){
+      Serial.println("true, " + String(i) + ", " + String(dist) + ", " + arr[i]);
+      int a = (i == 0)? 0 : arr[i-1];
+      int offset = (n == 0)? 1 : 0;
+
+      return map(dist, a, arr[i], ((i + offset) * 10), ((i + offset + 1) * 10));
+    }
+  }
+  return -1;
 }
 
 int obstaclePosition(int val){
-  /**
-   * range of values are from 
-   * (1.2n - 4) - (4 + 0.1n) to (1.2n - 4) + (4 + 0.1n)
-   */
-  int i;
-  for (i = 1; i <= 10; i++){
-    if (val <= (13 * i)) {
-      return i;
-    }
-  }
-  return 0;
+  return ((val + 4)) / 10;
 }
 
