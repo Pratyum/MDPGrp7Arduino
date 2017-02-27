@@ -39,7 +39,6 @@ void loop() {
 
   double pepe1 = millis();  // takes the time before the loop on the library begins
   int dist0 = sensor0.distance();
-<<<<<<< HEAD
 //  int dist1 = sensor1.distance();
 //  int dist2 = sensor2.distance();
 //  int dist3 = sensor3.distance();
@@ -76,40 +75,6 @@ void loop() {
   
 //  Serial.print("Time taken (ms): ");
 //  Serial.println(pepe2);
-=======
-  double pepe2 = millis() - pepe1;  // the following gives you the time taken to get the measurement
-
-  // Serial.print(dist0);
-  //  Serial.print(", ");
-  long value1 = map(dist0,20,27,20,30);
-  long value2 = map(dist0,27,37,30,40);
-  long value3 = map(dist0,37,47,40,50);
-  long value4 = map(dist0,47,57,50,60);
-  long value5 = map(dist0,57,69,60,70);
-  long value6 = map(dist0,69,79,70,80);
-  long value7 = map(dist0,81,91,80,90);
-  if (value2>=20 && value2<=30){
-    Serial.println("Distance : " + String(value1)+ "cm");
-  }else if (value2>=30 && value2<=40){
-    Serial.println("Distance : " + String(value2)+ "cm");
-  }else if (value2>=40 && value2<=50){
-    Serial.println("Distance : " + String(value3)+ "cm");
-  }else if (value2>=50 && value2<=60){
-    Serial.println("Distance : " + String(value4)+ "cm");
-  }else if (value2>=60 && value2<=70){
-    Serial.println("Distance : " + String(value5)+ "cm");
-  }else if (value2>=70 && value2<=80){
-    Serial.println("Distance : " + String(value6)+ "cm");
-  }else if (value2>=80 && value2<=90){
-    Serial.println("Distance : " + String(value7)+ "cm");
-  }else {
-    Serial.println("Distance : " + String(value7)+ "cm");
-  }
-  Serial.println("Values are : " + String(value1)+","+ String(value2)+","+ String(value3)+","+String(value4)+","+String(value5)+","+String(value6)+","+String(value7));
-  Serial.println();    
-  //  Serial.print("Time taken (ms): ");
-  //  Serial.println(pepe2);
->>>>>>> origin/master
 }
 
 int calibrateSensorValue(int dist, int n){
