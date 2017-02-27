@@ -12,7 +12,7 @@
  */
 #define pinEncoderL 3
 #define pinEncoderR 5
-#define pinSensorR 0  // Right
+#define pinSensorL 0  // Left
 #define pinSensorFL 1 // Front Left
 #define pinSensorFC 2 // Front Center
 #define pinSensorFR 3 // Front Right
@@ -26,7 +26,7 @@
 
 DualVNH5019MotorShield md;
 
-SharpIR sensorR(pinSensorR, 200, 99, MODEL_LONG);
+SharpIR sensorL(pinSensorL, 200, 99, MODEL_LONG);
 SharpIR sensorFL(pinSensorFL, 200, 99, MODEL_SHORT);
 SharpIR sensorFC(pinSensorFC, 200, 99, MODEL_SHORT);
 SharpIR sensorFR(pinSensorFR, 200, 99, MODEL_SHORT);
@@ -54,6 +54,7 @@ volatile long encoderCountLeft, encoderCountRight;
 long prevTick;
 double integral;
 
+int mode;
 
 void setup() {
   Serial.begin(9600);
@@ -71,6 +72,8 @@ void loop() {
   char commandBuffer[10];
   char command, ch;
   bool flag = true;
+
+  mode = 0;
 
   while (1){
     if (Serial.available()) {
@@ -91,41 +94,39 @@ void loop() {
     val = val + (commandBuffer[j] - 48);
     j++;
   }
-
-  val = (val == 0) ? 1 : val;
-
+  
   switch (command) {
     case 'F': case 'f': // forward
-      forward(val * 10); 
+      (val == 0) ? forward(10) : forward(val * 10);
       break;
     case 'B': case 'b': // reverse
-      reverse(val * 10);
+      (val == 0) ? reverse(10) : reverse(val * 10);
       break;
     case 'L': case 'l': // rotateLeft
-      rotateLeft(val);
+      (val == 0) ? rotateLeft(90) : rotateLeft(val);
       break;
     case 'R': case 'r': // rotateRight
-      rotateRight(val);
+      (val == 0) ? rotateRight(90) : rotateRight(val);
       break;
     case 'S': case 's': // readSensors
       readSensors();
       break;
     case 'C': case 'c': // calibrate to right wall
+      mode = 1;
       calibrateAngle(sensorRF, 4, sensorRR, 5, 10);
       break;
     case 'X': case 'x': // calibrate to front wall
+      mode = 1;
       calibrateAngle(sensorFL, 1, sensorFR, 3, 10);
-      calibrateDistance(sensorFR, 1);
+      calibrateDistance(sensorFR, 1, WALL_GAP);
       break;
     default: 
       flag = false;
-      Serial.println("Invalid Command!");
+      Serial.println("E");
   }
 
   if (flag) {
-    Serial.print(command);
-    if (val != 0) Serial.print(val);
-    Serial.println(" done!");
+    Serial.println("D");
   }
 }
 
@@ -152,9 +153,9 @@ double computePID() {
   error = encoderCountLeft - encoderCountRight;
   integral += error;
 
-  p = error * kp;
-  i = integral * ki;
-  d = (prevTick - encoderCountLeft) * kd;
+  p = kp * error;
+  i = ki * integral;
+  d = kd * (prevTick - encoderCountLeft);
   pid = p + i + d;
 
   prevTick = encoderCountLeft;
@@ -172,7 +173,12 @@ void forward(double cm) {
 
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
-    md.setSpeeds(200 - pid, 200 + pid);
+    if (mode == 0) {
+      md.setSpeeds(200 - pid, 200 + pid);
+    }
+    else if (mode == 1) {
+      md.setSpeeds(50 - pid, 50 + pid);
+    }
   }
 
   md.setBrakes(400, 400);
@@ -190,7 +196,12 @@ void reverse(double cm) {
 
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
-    md.setSpeeds(-(200 - pid), -(200 + pid));
+    if (mode == 0) {
+      md.setSpeeds(-(200 - pid), -(200 + pid));
+    }
+    else if (mode == 1) {
+      md.setSpeeds(-(50 - pid), -(50 + pid));
+    }
   }
   md.setBrakes(400, 400);
   delay(100);
@@ -209,7 +220,13 @@ int rotateRight(double deg) {
 
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
-    md.setSpeeds(200 - pid, -(200 + pid));
+    if (mode == 0) {
+      md.setSpeeds(200 - pid, -(200 + pid));
+    }
+    else if (mode == 1) {
+      md.setSpeeds(50 - pid, -(50 + pid));
+    }
+    
   }
   md.setBrakes(400, 400);
   delay(100);
@@ -228,7 +245,12 @@ int rotateLeft(double deg) {
 
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
-    md.setSpeeds(-(200 - pid), (200 + pid));
+    if (mode == 0) {
+      md.setSpeeds(-(200 - pid), (200 + pid));
+    }
+    else if (mode == 1) {
+      md.setSpeeds(-(50 - pid), (50 + pid));
+    }
   }
   md.setBrakes(400, 400);
   delay(100);
@@ -240,7 +262,7 @@ int rotateLeft(double deg) {
 void readSensors() {
   String output = "";
 
-  output += String(obstaclePosition(calibrateSensorValue(sensorR.distance(), 0)));
+  output += String(obstaclePosition(calibrateSensorValue(sensorL.distance(), 0)));
   output += String(obstaclePosition(calibrateSensorValue(sensorFL.distance(), 1)));
   output += String(obstaclePosition(calibrateSensorValue(sensorFC.distance(), 2)));
   output += String(obstaclePosition(calibrateSensorValue(sensorFR.distance(), 3)));
@@ -294,7 +316,7 @@ void calibrateAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int di
   double angle = 0;
 
   Serial.println("dist: " + String(distL) + ", " + String(distR) + ", " + String(diff) + ", " + String(mean));
-  while (diff > 0){
+  while (diff > 0.2){
     angle = (asin(mean/dist) * (180/3.14159265));
     Serial.println("angle: " + String(angle));
     if (distL > distR){
@@ -310,13 +332,13 @@ void calibrateAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int di
   }
 }
 
-void calibrateDistance(SharpIR sensor, int arr){
+void calibrateDistance(SharpIR sensor, int arr, int gap){
   int dist = calibrateSensorValue(sensor.distance(), arr);
 
-  if (dist < WALL_GAP) {
-    reverse(WALL_GAP - dist);
+  if (dist < gap) {
+    reverse(gap - dist);
   }
-  else if (dist > WALL_GAP) {
-    forward(dist - WALL_GAP);
+  else if (dist > gap) {
+    forward(dist - gap);
   }
 }
