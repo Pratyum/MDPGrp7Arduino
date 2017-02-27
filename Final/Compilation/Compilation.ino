@@ -16,20 +16,22 @@
 #define pinSensorFL 1 // Front Left
 #define pinSensorFC 2 // Front Center
 #define pinSensorFR 3 // Front Right
-#define pinSensorLB 4 // Left Back
-#define pinSensorLF 5 // Left Front
+#define pinSensorRF 4 // Right Front
+#define pinSensorRR 5 // Right Rear
 
 #define MODEL_SHORT 1080 // 1080 (Short), 20150 (Long)
 #define MODEL_LONG 20150 // 1080 (Short), 20150 (Long)
 
+#define WALL_GAP 10
+
 DualVNH5019MotorShield md;
 
 SharpIR sensorR(pinSensorR, 200, 99, MODEL_LONG);
-//SharpIR sensorFL(pinSensorFL, 200, 99, MODEL_SHORT);
-//SharpIR sensorFC(pinSensorFC, 200, 99, MODEL_SHORT);
-//SharpIR sensorFR(pinSensorFR, 200, 99, MODEL_SHORT);
-//SharpIR sensorLB(pinSensorLB, 200, 99, MODEL_SHORT);
-//SharpIR sensorLF(pinSensorLF, 200, 99, MODEL_SHORT);
+SharpIR sensorFL(pinSensorFL, 200, 99, MODEL_SHORT);
+SharpIR sensorFC(pinSensorFC, 200, 99, MODEL_SHORT);
+SharpIR sensorFR(pinSensorFR, 200, 99, MODEL_SHORT);
+SharpIR sensorRF(pinSensorLB, 200, 99, MODEL_SHORT);
+SharpIR sensorRR(pinSensorLF, 200, 99, MODEL_SHORT);
 
 /**
  * ============================== For mapping sensor values ==============================
@@ -68,6 +70,7 @@ void loop() {
   int i = 0, j = 1, val = 0;
   char commandBuffer[10];
   char command, ch;
+  bool flag = true;
 
   while (1){
     if (Serial.available()) {
@@ -89,34 +92,42 @@ void loop() {
     j++;
   }
 
+  val = (val == 0) ? 1 : val;
+
   switch (command) {
-    case 'F': // forward
-      val *= 10;
-//      forward(val); 
+    case 'F': case 'f': // forward
+      forward(val * 10); 
       break;
-    case 'B': // reverse
-      val *= 10;
-//      reverse(val);
+    case 'B': case 'b': // reverse
+      reverse(val * 10);
       break;
-    case 'L': // rotateLeft
-//      rotateLeft(val);
+    case 'L': case 'l': // rotateLeft
+      rotateLeft(val);
       break;
-    case 'R': // rotateRight
-//      rotateRight(val);
+    case 'R': case 'r': // rotateRight
+      rotateRight(val);
       break;
-    case 'S': // readSensors
-//      readSensors(val);
+    case 'S': case 's': // readSensors
+      readSensors();
       break;
-    case 'C': // calibrate
-//      calibrate(val);
+    case 'C': case 'c': // calibrate to right wall
+      calibrateAngle(sensorRF, 4, sensorRR, 5, 10);
+      calibrateDistance(sensorRF, 4);
+      break;
+    case 'X': case 'x': // calibrate to front wall
+      calibrateAngle(sensorFL, 1, sensorFR, 3, 10);
+      calibrateDistance(sensorFR, 1);
       break;
     default: 
-      Serial.println("default");
+      flag = false;
+      Serial.println("Invalid Command!");
   }
 
-  Serial.print(command);
-  if (val != 0) Serial.print(val);
-  Serial.println(" done!");
+  if (flag) {
+    Serial.print(command);
+    if (val != 0) Serial.print(val);
+    Serial.println(" done!");
+  }
 }
 
 
@@ -231,16 +242,13 @@ void readSensors() {
   String output = "";
 
   output += String(obstaclePosition(calibrateSensorValue(sensorR.distance(), 0)));
-  output += "|";
   output += String(obstaclePosition(calibrateSensorValue(sensorFL.distance(), 1)));
-  output += "|";
   output += String(obstaclePosition(calibrateSensorValue(sensorFC.distance(), 2)));
-  output += "|";
   output += String(obstaclePosition(calibrateSensorValue(sensorFR.distance(), 3)));
-  output += "|";
   output += String(obstaclePosition(calibrateSensorValue(sensorLB.distance(), 4)));
-  output += "|";
   output += String(obstaclePosition(calibrateSensorValue(sensorLF.distance(), 5)));
+
+  Serial.println(output);
 }
 
 int calibrateSensorValue(int dist, int n){
@@ -278,13 +286,13 @@ int obstaclePosition(int val){
 /**
  * ============================== Calibrate robot ==============================
  */
-void alignAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int dist) {
+void calibrateAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int dist) {
   int distL = calibrateSensorValue(sensorL.distance(), arrL);
   int distR = calibrateSensorValue(sensorR.distance(), arrR);
   int diff = abs(distL - distR);
   int mean = diff / 2;
 
-  int angle;
+  int angle = 0;
 
   while (diff > 0.2){
     angle = (asin(mean/dist) * (180/3.14159265));
@@ -302,32 +310,13 @@ void alignAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int dist) 
   }
 }
 
-void checkSensorToWallDistance(){
-  sensor_R_dis = getMedianDistance(sensor_R) + SENSOR_OFFSET;
-  sensor_L_dis = getMedianDistance(sensor_L) + SENSOR_OFFSET;
-  
-  if (sensor_R_dis != WALL_DISTANCE || sensor_L_dis != WALL_DISTANCE){
+void calibrateDistance(SharpIR sensor, int arr){
+  int dist = calibrateSensorValue(sensor.distance(), arr);
 
-    if (sensor_R_dis < WALL_DISTANCE || sensor_L_dis < WALL_DISTANCE){
-      if (sensor_R_dis < sensor_L_dis){
-        sensorDiff = WALL_DISTANCE - sensor_R_dis;
-        moveBackward(sensorDiff);
-      }
-      else{
-        sensorDiff = WALL_DISTANCE - sensor_L_dis;
-        moveBackward(sensorDiff);
-      }
-    }
-
-    else if (sensor_R_dis > WALL_DISTANCE || sensor_L_dis > WALL_DISTANCE){
-       if (sensor_R_dis > sensor_L_dis){
-        sensorDiff = sensor_L_dis - WALL_DISTANCE;
-        moveForward(sensorDiff);
-       }
-       else{
-        sensorDiff = sensor_R_dis - WALL_DISTANCE;
-        moveForward(sensorDiff);
-      } 
-    }
+  if (dist < WALL_GAP) {
+    reverse(WALL_GAP - dist);
+  }
+  else if (dist > WALL_GAP) {
+    forward(dist - WALL_GAP);
   }
 }
