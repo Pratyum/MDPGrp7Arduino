@@ -30,8 +30,8 @@ SharpIR sensorR(pinSensorR, 200, 99, MODEL_LONG);
 SharpIR sensorFL(pinSensorFL, 200, 99, MODEL_SHORT);
 SharpIR sensorFC(pinSensorFC, 200, 99, MODEL_SHORT);
 SharpIR sensorFR(pinSensorFR, 200, 99, MODEL_SHORT);
-SharpIR sensorRF(pinSensorLB, 200, 99, MODEL_SHORT);
-SharpIR sensorRR(pinSensorLF, 200, 99, MODEL_SHORT);
+SharpIR sensorRF(pinSensorRF, 200, 99, MODEL_SHORT);
+SharpIR sensorRR(pinSensorRR, 200, 99, MODEL_SHORT);
 
 /**
  * ============================== For mapping sensor values ==============================
@@ -112,7 +112,6 @@ void loop() {
       break;
     case 'C': case 'c': // calibrate to right wall
       calibrateAngle(sensorRF, 4, sensorRR, 5, 10);
-      calibrateDistance(sensorRF, 4);
       break;
     case 'X': case 'x': // calibrate to front wall
       calibrateAngle(sensorFL, 1, sensorFR, 3, 10);
@@ -245,8 +244,8 @@ void readSensors() {
   output += String(obstaclePosition(calibrateSensorValue(sensorFL.distance(), 1)));
   output += String(obstaclePosition(calibrateSensorValue(sensorFC.distance(), 2)));
   output += String(obstaclePosition(calibrateSensorValue(sensorFR.distance(), 3)));
-  output += String(obstaclePosition(calibrateSensorValue(sensorLB.distance(), 4)));
-  output += String(obstaclePosition(calibrateSensorValue(sensorLF.distance(), 5)));
+  output += String(obstaclePosition(calibrateSensorValue(sensorRF.distance(), 4)));
+  output += String(obstaclePosition(calibrateSensorValue(sensorRR.distance(), 5)));
 
   Serial.println(output);
 }
@@ -289,14 +288,15 @@ int obstaclePosition(int val){
 void calibrateAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int dist) {
   int distL = calibrateSensorValue(sensorL.distance(), arrL);
   int distR = calibrateSensorValue(sensorR.distance(), arrR);
-  int diff = abs(distL - distR);
-  int mean = diff / 2;
+  double diff = abs(distL - distR);
+  double mean = diff / 2;
 
-  int angle = 0;
+  double angle = 0;
 
-  while (diff > 0.2){
+  Serial.println("dist: " + String(distL) + ", " + String(distR) + ", " + String(diff) + ", " + String(mean));
+  while (diff > 0){
     angle = (asin(mean/dist) * (180/3.14159265));
-    
+    Serial.println("angle: " + String(angle));
     if (distL > distR){
       rotateRight(angle);
     }
