@@ -4,15 +4,29 @@ This repo is for MDP Group 7 (Arduino).
 ## Installation
 
 ### Motor Shield Library (for Arduino)
-https://github.com/pololu/dual-vnh5019-motor-shield
+https://github.com/pololu/dual-vnh5019-motor-shield/
 
 ### Arduino PID Library
-http://playground.arduino.cc/Code/PIDLibrary
+http://playground.arduino.cc/Code/PIDLibrary/
+
 https://github.com/br3ttb/Arduino-PID-Library/
 
-
 ### IR Sensor Library
-http://playground.arduino.cc/Main/SharpIR
+http://playground.arduino.cc/Main/SharpIR/
+
+https://github.com/guillaume-rico/SharpIR/
+
+### Running Median Library
+http://playground.arduino.cc/Main/RunningMedian/
+
+https://github.com/RobTillaart/Arduino/tree/master/libraries/RunningMedian/
+
+### Pin Change Interrupt Library
+http://playground.arduino.cc/Main/PinChangeInt/
+
+https://code.google.com/archive/p/arduino-pinchangeint/
+
+https://github.com/GreyGnome/PinChangeInt/
 
 ## Usage
 TODO: Write usage instructions
