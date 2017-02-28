@@ -8,7 +8,7 @@
 
 /**
  * ============================== Define all constant values ==============================
- * define al the constant values that will be used
+ * define all the constant values that will be used
  */
 #define pinEncoderL 3
 #define pinEncoderR 5
@@ -77,7 +77,7 @@ void loop() {
 
   while (1){
     if (Serial.available()) {
-      delay(10);
+      delay(50);
       while (Serial.available()) {
         ch = Serial.read();
         commandBuffer[i] = ch;
@@ -177,7 +177,7 @@ void forward(double cm) {
       md.setSpeeds(200 - pid, 200 + pid);
     }
     else if (mode == 1) {
-      md.setSpeeds(50 - pid, 50 + pid);
+      md.setSpeeds(100 - pid, 100 + pid);
     }
   }
 
@@ -200,14 +200,14 @@ void reverse(double cm) {
       md.setSpeeds(-(200 - pid), -(200 + pid));
     }
     else if (mode == 1) {
-      md.setSpeeds(-(50 - pid), -(50 + pid));
+      md.setSpeeds(-(100 - pid), -(100 + pid));
     }
   }
   md.setBrakes(400, 400);
   delay(100);
 }
 
-int rotateRight(double deg) {
+void rotateRight(double deg) {
   double pid;
   int targetTick;
   integral = 0;
@@ -224,7 +224,7 @@ int rotateRight(double deg) {
       md.setSpeeds(200 - pid, -(200 + pid));
     }
     else if (mode == 1) {
-      md.setSpeeds(50 - pid, -(50 + pid));
+      md.setSpeeds(100 - pid, -(100 + pid));
     }
     
   }
@@ -232,7 +232,7 @@ int rotateRight(double deg) {
   delay(100);
 }
 
-int rotateLeft(double deg) {
+void rotateLeft(double deg) {
   double pid;
   int targetTick;
   integral = 0;
@@ -249,7 +249,7 @@ int rotateLeft(double deg) {
       md.setSpeeds(-(200 - pid), (200 + pid));
     }
     else if (mode == 1) {
-      md.setSpeeds(-(50 - pid), (50 + pid));
+      md.setSpeeds(-(100 - pid), (100 + pid));
     }
   }
   md.setBrakes(400, 400);
@@ -290,7 +290,7 @@ int calibrateSensorValue(int dist, int n){
 
   for (i = 0; i < len; i++){
     if (dist < arr[i]){
-      Serial.println("true, " + String(i) + ", " + String(dist) + ", " + arr[i]);
+      //Serial.println("true, " + String(i) + ", " + String(dist) + ", " + arr[i]);
       int a = (i == 0)? 0 : arr[i-1];
       int offset = (n == 0)? 1 : 0;
 
@@ -315,9 +315,11 @@ void calibrateAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int di
 
   double angle = 0;
 
-  Serial.println("dist: " + String(distL) + ", " + String(distR) + ", " + String(diff) + ", " + String(mean));
-  while (diff > 0.2){
+  
+  while (mean > 0){
+    Serial.println("dist: " + String(distL) + ", " + String(distR) + ", " + String(diff) + ", " + String(mean));
     angle = (asin(mean/dist) * (180/3.14159265));
+    angle = (mean > 0.5) ? angle : angle/2;
     Serial.println("angle: " + String(angle));
     if (distL > distR){
       rotateRight(angle);
@@ -329,7 +331,9 @@ void calibrateAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int di
     distL = calibrateSensorValue(sensorL.distance(), arrL);
     distR = calibrateSensorValue(sensorR.distance(), arrR);
     diff = abs(distL - distR);
+    mean = diff / 2;
   }
+  Serial.println(mean);
 }
 
 void calibrateDistance(SharpIR sensor, int arr, int gap){
