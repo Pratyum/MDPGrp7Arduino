@@ -39,12 +39,12 @@ SharpIR sensorRR(pinSensorRR, 200, 99, MODEL_SHORT);
  * arrMapping0 is for long-range
  * long-range (start from 20); short-range (start from 10)
  */
-int arrMapping0[] = {20, 27, 37, 47, 58, 69, 80, 91, 100, 120, 130, 140, 150};
-int arrMapping1[] = {10, 20, 30, 40, 50, 60, 70, 80};
-int arrMapping2[] = {10, 20, 30, 40, 50, 60, 70, 80};
-int arrMapping3[] = {10, 20, 30, 40, 50, 60, 70, 80};
-int arrMapping4[] = {10, 20, 30, 40, 50, 60, 70, 80};
-int arrMapping5[] = {10, 20, 30, 40, 50, 60, 70, 80};
+double arrMapping0[] = {20.3, 25.36, 33.7, 43.78, 53.8, 65.5, 74.7, 86.6, 98.4, 110.7, 125.57, 139.8};
+double arrMapping1[] = {9.94, 21, 32.66, 45.5, 61, 81};
+double arrMapping2[] = {9.82, 20.45, 32.55, 44.66, 52.3, 61.4};
+double arrMapping3[] = {10.58, 21.66, 32.43, 35.5, 35.6, 40.1};
+double arrMapping4[] = {10.51, 22.56, 36.4, 48.3, 60.7, 71};
+double arrMapping5[] = {10.21, 21.68, 33.52, 42.5, 50.6, 60, 70, 80};
 
 /**
  * ============================== Initiate global variables ==============================
@@ -113,12 +113,11 @@ void loop() {
       break;
     case 'C': case 'c': // calibrate to right wall
       mode = 1;
-      calibrateAngle(sensorRF, 4, sensorRR, 5, 10);
+      calibrateWithRight();
       break;
     case 'X': case 'x': // calibrate to front wall
       mode = 1;
-      calibrateAngle(sensorFL, 1, sensorFR, 3, 10);
-      calibrateDistance(sensorFR, 1, WALL_GAP);
+      calibrateWithFront();
       break;
     default: 
       flag = false;
@@ -272,8 +271,8 @@ void readSensors() {
   Serial.println(output);
 }
 
-int calibrateSensorValue(int dist, int n){
-  int *arr;
+double calibrateSensorValue(double dist, int n){
+  double *arr;
   int i, len;
 
   //int dist = sensor.distance();
@@ -294,7 +293,7 @@ int calibrateSensorValue(int dist, int n){
       int a = (i == 0)? 0 : arr[i-1];
       int offset = (n == 0)? 1 : 0;
 
-      return map(dist, a, arr[i], ((i + offset) * 10), ((i + offset + 1) * 10));
+      return modifiedMap(dist, a, arr[i], ((i + offset) * 10), ((i + offset + 1) * 10));
     }
   }
   return -1;
@@ -304,22 +303,48 @@ int obstaclePosition(int val){
   return ((val + 4)) / 10;
 }
 
+double modifiedMap(double x, double in_min, double in_max, double out_min, double out_max) {
+  double temp = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+  temp = (int) (4*temp + .5);
+  return (double) temp/4;
+}
+
 /**
  * ============================== Calibrate robot ==============================
  */
+void calibrateWithRight() {
+  double distL = calibrateSensorValue(sensorRF.distance(), 4);
+  double distR = calibrateSensorValue(sensorRR.distance(), 5);
+  if ((distL + distR) != (2 * WALL_GAP)) {
+    mode = 0;
+    rotateRight(90);
+    calibrateWithFront();
+    rotateLeft(90);
+    mode = 1;
+  }
+  else {
+    calibrateAngle(sensorRF, 4, sensorRR, 5, 19);
+  }
+}
+
+void calibrateWithFront() {
+  calibrateAngle(sensorFL, 1, sensorFR, 3, 17);
+  calibrateDistance(sensorFL, 1);
+}
+ 
 void calibrateAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int dist) {
-  int distL = calibrateSensorValue(sensorL.distance(), arrL);
-  int distR = calibrateSensorValue(sensorR.distance(), arrR);
+  double distL = calibrateSensorValue(sensorL.distance(), arrL);
+  double distR = calibrateSensorValue(sensorR.distance(), arrR);
   double diff = abs(distL - distR);
   double mean = diff / 2;
 
   double angle = 0;
 
   
-  while (mean > 0){
+  while (mean > 0.25){
     Serial.println("dist: " + String(distL) + ", " + String(distR) + ", " + String(diff) + ", " + String(mean));
     angle = (asin(mean/dist) * (180/3.14159265));
-    angle = (mean > 0.5) ? angle : angle/2;
+    //angle = (mean > 0.5) ? angle : angle/2;
     Serial.println("angle: " + String(angle));
     if (distL > distR){
       rotateRight(angle);
@@ -336,13 +361,13 @@ void calibrateAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int di
   Serial.println(mean);
 }
 
-void calibrateDistance(SharpIR sensor, int arr, int gap){
-  int dist = calibrateSensorValue(sensor.distance(), arr);
+void calibrateDistance(SharpIR sensor, int arr){
+  double dist = calibrateSensorValue(sensor.distance(), arr);
 
-  if (dist < gap) {
-    reverse(gap - dist);
+  if (dist < WALL_GAP) {
+    reverse(WALL_GAP - dist);
   }
-  else if (dist > gap) {
-    forward(dist - gap);
+  else if (dist > WALL_GAP) {
+    forward(dist - WALL_GAP);
   }
 }

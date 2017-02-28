@@ -25,10 +25,10 @@ SharpIR sensor5(pinSensor5, 200, 99, MODEL_SHORT);
  */
 double arrMapping0[] = {20.3, 25.36, 33.7, 43.78, 53.8, 65.5, 74.7, 86.6, 98.4, 110.7, 125.57, 139.8};
 double arrMapping1[] = {9.94, 21, 32.66, 45.5, 61, 81};
-double arrMapping2[] = {9.82, 20.45, 32.55, 44.66, 55, 61.4};
+double arrMapping2[] = {9.82, 20.45, 32.55, 44.66, 52.3, 61.4};
 double arrMapping3[] = {10.58, 21.66, 32.43, 35.5, 35.6, 40.1};
 double arrMapping4[] = {10.51, 22.56, 36.4, 48.3, 60.7, 71};
-double arrMapping5[] = {10, 20, 30, 40, 50, 60, 70, 80};
+double arrMapping5[] = {10.21, 21.68, 33.52, 42.5, 50.6, 60, 70, 80};
 
 void setup() {
   Serial.begin(9600);
@@ -111,7 +111,7 @@ double calibrateSensorValue(double dist, int n){
       int a = (i == 0)? 0 : arr[i-1];
       int offset = (n == 0)? 1 : 0;
 
-      return map(dist, a, arr[i], ((i + offset) * 10), ((i + offset + 1) * 10));
+      return modifiedMap(dist, a, arr[i], ((i + offset) * 10), ((i + offset + 1) * 10));
     }
   }
   return -1;
@@ -119,5 +119,12 @@ double calibrateSensorValue(double dist, int n){
 
 int obstaclePosition(int val){
   return ((val + 4)) / 10;
+}
+
+double modifiedMap(double x, double in_min, double in_max, double out_min, double out_max)
+{
+ double temp = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+ temp = (int) (4*temp + .5);
+ return (double) temp/4;
 }
 
