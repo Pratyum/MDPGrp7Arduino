@@ -22,7 +22,11 @@ void setup() {
 }
 
 void loop() {
-  
+  forward(120);
+//  reverse(120);
+//  rotateRight(90);
+//  rotateLeft(90);
+  delay(1000000);
 }
 
 void incLeft() {
@@ -34,12 +38,12 @@ void incRight() {
 }
 
 double computePID() {
-  //Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
+  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
   double kp, ki, kd, p, i, d, error, pid;
 
-  kp = 14.3; // trial and error
-  ki = 0;
-  kd = 0;
+  kp = 15; // trial and error
+  ki = 0.005;
+  kd = 0.025;
 
   error = encoderCountLeft - encoderCountRight;
   integral += error;
@@ -64,12 +68,7 @@ void forward(double cm) {
 
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
-    if (mode == 0) {
-      md.setSpeeds(200 - pid, 200 + pid);
-    }
-    else if (mode == 1) {
-      md.setSpeeds(100 - pid, 100 + pid);
-    }
+    md.setSpeeds(196 - pid, 200 + pid);
   }
 
   md.setBrakes(400, 400);
@@ -87,12 +86,7 @@ void reverse(double cm) {
 
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
-    if (mode == 0) {
-      md.setSpeeds(-(200 - pid), -(200 + pid));
-    }
-    else if (mode == 1) {
-      md.setSpeeds(-(100 - pid), -(100 + pid));
-    }
+    md.setSpeeds(-(300 - pid), -(300 + pid));
   }
   md.setBrakes(400, 400);
   delay(100);
@@ -111,12 +105,7 @@ void rotateRight(double deg) {
 
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
-    if (mode == 0) {
-      md.setSpeeds(200 - pid, -(200 + pid));
-    }
-    else if (mode == 1) {
-      md.setSpeeds(100 - pid, -(100 + pid));
-    }
+    md.setSpeeds(200 - pid, -(200 + pid));
     
   }
   md.setBrakes(400, 400);
@@ -136,12 +125,7 @@ void rotateLeft(double deg) {
 
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
-    if (mode == 0) {
-      md.setSpeeds(-(200 - pid), (200 + pid));
-    }
-    else if (mode == 1) {
-      md.setSpeeds(-(100 - pid), (100 + pid));
-    }
+    md.setSpeeds(-(200 - pid), (200 + pid));
   }
   md.setBrakes(400, 400);
   delay(100);

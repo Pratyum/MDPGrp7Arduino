@@ -117,7 +117,7 @@ void loop() {
       break;
     case 'X': case 'x': // calibrate to front wall
       mode = 1;
-      calibrateWithFront();
+      calibrateWithFront(val);
       break;
     default: 
       flag = false;
@@ -315,10 +315,12 @@ double modifiedMap(double x, double in_min, double in_max, double out_min, doubl
 void calibrateWithRight() {
   double distL = calibrateSensorValue(sensorRF.distance(), 4);
   double distR = calibrateSensorValue(sensorRR.distance(), 5);
-  if ((distL + distR) != (2 * WALL_GAP)) {
+  if (((distL + distR) < ((2 * WALL_GAP) - 1)) || ((distL + distR) > ((2 * WALL_GAP) + 1))) {
     mode = 0;
     rotateRight(90);
-    calibrateWithFront();
+    mode = 1;
+    calibrateWithFront(1);
+    mode = 0;
     rotateLeft(90);
     mode = 1;
   }
@@ -327,9 +329,23 @@ void calibrateWithRight() {
   }
 }
 
-void calibrateWithFront() {
-  calibrateAngle(sensorFL, 1, sensorFR, 3, 17);
-  calibrateDistance(sensorFL, 1);
+void calibrateWithFront(int n) {
+  switch (n) {
+    case 0:
+      calibrateAngle(sensorFL, 1, sensorFR, 3, 9);
+      calibrateDistance(sensorFL, 1);
+      break;
+    case 1:
+      calibrateAngle(sensorFL, 1, sensorFC, 2, 17);
+      calibrateDistance(sensorFC, 2);
+      break;
+    case 2:
+      calibrateAngle(sensorFC, 2, sensorFR, 3, 9);
+      calibrateDistance(sensorFC, 2);
+      break;
+    default:
+      break;
+  }
 }
  
 void calibrateAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int dist) {
@@ -344,7 +360,7 @@ void calibrateAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int di
   while (mean > 0.25){
     Serial.println("dist: " + String(distL) + ", " + String(distR) + ", " + String(diff) + ", " + String(mean));
     angle = (asin(mean/dist) * (180/3.14159265));
-    //angle = (mean > 0.5) ? angle : angle/2;
+    angle = (mean > 0.5) ? angle : angle/2;
     Serial.println("angle: " + String(angle));
     if (distL > distR){
       rotateRight(angle);
