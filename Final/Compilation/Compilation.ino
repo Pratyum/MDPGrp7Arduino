@@ -30,8 +30,8 @@ SharpIR sensorR(pinSensorR, 200, 99, MODEL_LONG);
 SharpIR sensorFL(pinSensorFL, 200, 99, MODEL_SHORT);
 SharpIR sensorFC(pinSensorFC, 200, 99, MODEL_SHORT);
 SharpIR sensorFR(pinSensorFR, 200, 99, MODEL_SHORT);
-SharpIR sensorRF(pinSensorLB, 200, 99, MODEL_SHORT);
-SharpIR sensorRR(pinSensorLF, 200, 99, MODEL_SHORT);
+SharpIR sensorRF(pinSensorRF, 200, 99, MODEL_SHORT);
+SharpIR sensorRR(pinSensorRR, 200, 99, MODEL_SHORT);
 
 /**
  * ============================== For mapping sensor values ==============================
@@ -83,7 +83,11 @@ void loop() {
       break;
     }
   }
-
+  Serial.print("CommandBuffer : " + );
+  for(int i=0; i<10; i++){
+      Serial.print(commandBuffer[i]);
+  }
+  Serial.println();
   command = commandBuffer[0];
 
   while (j < i) {
@@ -245,8 +249,8 @@ void readSensors() {
   output += String(obstaclePosition(calibrateSensorValue(sensorFL.distance(), 1)));
   output += String(obstaclePosition(calibrateSensorValue(sensorFC.distance(), 2)));
   output += String(obstaclePosition(calibrateSensorValue(sensorFR.distance(), 3)));
-  output += String(obstaclePosition(calibrateSensorValue(sensorLB.distance(), 4)));
-  output += String(obstaclePosition(calibrateSensorValue(sensorLF.distance(), 5)));
+  output += String(obstaclePosition(calibrateSensorValue(sensorRF.distance(), 4)));
+  output += String(obstaclePosition(calibrateSensorValue(sensorRR.distance(), 5)));
 
   Serial.println(output);
 }

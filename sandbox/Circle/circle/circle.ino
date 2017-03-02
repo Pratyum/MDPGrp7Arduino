@@ -199,7 +199,7 @@ void incRight() {
 
 
 double tuneWithPID() {
-  //Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
+  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
   double kp, ki, kd, p, i, d;
 
   kp = 14.3; // trial and error
