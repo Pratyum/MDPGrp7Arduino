@@ -8,11 +8,11 @@
 
 /**
  * ============================== Define all constant values ==============================
- * define al the constant values that will be used
+ * define all the constant values that will be used
  */
 #define pinEncoderL 3
 #define pinEncoderR 5
-#define pinSensorR 0  // Right
+#define pinSensorL 0  // Left
 #define pinSensorFL 1 // Front Left
 #define pinSensorFC 2 // Front Center
 #define pinSensorFR 3 // Front Right
@@ -26,12 +26,12 @@
 
 DualVNH5019MotorShield md;
 
-SharpIR sensorR(pinSensorR, 200, 99, MODEL_LONG);
-SharpIR sensorFL(pinSensorFL, 200, 99, MODEL_SHORT);
-SharpIR sensorFC(pinSensorFC, 200, 99, MODEL_SHORT);
-SharpIR sensorFR(pinSensorFR, 200, 99, MODEL_SHORT);
-SharpIR sensorRF(pinSensorRF, 200, 99, MODEL_SHORT);
-SharpIR sensorRR(pinSensorRR, 200, 99, MODEL_SHORT);
+SharpIR sensorL(pinSensorL, MODEL_LONG);
+SharpIR sensorFL(pinSensorFL, MODEL_SHORT);
+SharpIR sensorFC(pinSensorFC, MODEL_SHORT);
+SharpIR sensorFR(pinSensorFR, MODEL_SHORT);
+SharpIR sensorRF(pinSensorRF, MODEL_SHORT);
+SharpIR sensorRR(pinSensorRR, MODEL_SHORT);
 
 /**
  * ============================== For mapping sensor values ==============================
@@ -39,13 +39,12 @@ SharpIR sensorRR(pinSensorRR, 200, 99, MODEL_SHORT);
  * arrMapping0 is for long-range
  * long-range (start from 20); short-range (start from 10)
  */
-int arrMapping0[] = {20, 27, 37, 47, 58, 69, 80, 91, 100, 120, 130, 140, 150};
-int arrMapping1[] = {10, 20, 30, 40, 50, 60, 70, 80};
-int arrMapping2[] = {10, 20, 30, 40, 50, 60, 70, 80};
-int arrMapping3[] = {10, 20, 30, 40, 50, 60, 70, 80};
-int arrMapping4[] = {10, 20, 30, 40, 50, 60, 70, 80};
-int arrMapping5[] = {10, 20, 30, 40, 50, 60, 70, 80};
-
+double arrMapping0[] = {18.74, 23.90, 32.29, 42.15, 52.99, 63.31, 72.90, 86.22, 100.06, 112.23};
+double arrMapping1[] = {10.14, 23.00, 38.02, 54.9, 69.27};
+double arrMapping2[] = {9.57, 20.14, 31.72, 43.05, 54.46};
+double arrMapping3[] = {10.03, 20.40, 30.74, 33.61};
+double arrMapping4[] = {9.91, 20.99, 32.72, 47.02, 60.33};
+double arrMapping5[] = {10.62, 22.22, 35.16, 46.42, 50.75};
 /**
  * ============================== Initiate global variables ==============================
  * initiate global variables that will be used
@@ -54,6 +53,7 @@ volatile long encoderCountLeft, encoderCountRight;
 long prevTick;
 double integral;
 
+int mode;
 
 void setup() {
   Serial.begin(9600);
@@ -72,9 +72,11 @@ void loop() {
   char command, ch;
   bool flag = true;
 
+  mode = 0;
+
   while (1){
     if (Serial.available()) {
-      delay(10);
+      delay(50);
       while (Serial.available()) {
         ch = Serial.read();
         commandBuffer[i] = ch;
@@ -95,42 +97,46 @@ void loop() {
     val = val + (commandBuffer[j] - 48);
     j++;
   }
-
-  val = (val == 0) ? 1 : val;
-
+  
   switch (command) {
     case 'F': case 'f': // forward
-      forward(val * 10); 
+      (val == 0) ? forward(10) : forward(val * 10);
       break;
     case 'B': case 'b': // reverse
-      reverse(val * 10);
+      (val == 0) ? reverse(10) : reverse(val * 10);
       break;
     case 'L': case 'l': // rotateLeft
-      rotateLeft(val);
+      (val == 0) ? rotateLeft(90) : rotateLeft(val);
       break;
     case 'R': case 'r': // rotateRight
-      rotateRight(val);
+      (val == 0) ? rotateRight(90) : rotateRight(val);
       break;
     case 'S': case 's': // readSensors
       readSensors();
       break;
     case 'C': case 'c': // calibrate to right wall
-      calibrateAngle(sensorRF, 4, sensorRR, 5, 10);
-      calibrateDistance(sensorRF, 4);
+      mode = 1;
+      calibrateWithRight();
       break;
-    case 'X': case 'x': // calibrate to front wall
-      calibrateAngle(sensorFL, 1, sensorFR, 3, 10);
-      calibrateDistance(sensorFR, 1);
+    case 'X': case 'x': // calibrate to front wall (sensor 1, 3)
+      mode = 1;
+      calibrateWithFront(0);
+      break;
+    case 'Y': case 'y': // calibrate to front wall (sensor 1, 2)
+      mode = 1;
+      calibrateWithFront(1);
+      break;
+    case 'Z': case 'z': // calibrate to front wall (sensor 2, 3)
+      mode = 1;
+      calibrateWithFront(2);
       break;
     default: 
       flag = false;
-      Serial.println("Invalid Command!");
+      Serial.println("E");
   }
 
   if (flag) {
-    Serial.print(command);
-    if (val != 0) Serial.print(val);
-    Serial.println(" done!");
+    Serial.println("D");
   }
 }
 
@@ -150,16 +156,16 @@ double computePID() {
   //Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
   double kp, ki, kd, p, i, d, error, pid;
 
-  kp = 14.3; // trial and error
-  ki = 0;
-  kd = 0;
+  kp = 15; // trial and error
+  ki = 0.005;
+  kd = 0.025;
 
   error = encoderCountLeft - encoderCountRight;
   integral += error;
 
-  p = error * kp;
-  i = integral * ki;
-  d = (prevTick - encoderCountLeft) * kd;
+  p = kp * error;
+  i = ki * integral;
+  d = kd * (prevTick - encoderCountLeft);
   pid = p + i + d;
 
   prevTick = encoderCountLeft;
@@ -177,7 +183,12 @@ void forward(double cm) {
 
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
-    md.setSpeeds(200 - pid, 200 + pid);
+    if (mode == 0) {
+      md.setSpeeds(196 - pid, 200 + pid);
+    }
+    else if (mode == 1) {
+      md.setSpeeds(98 - pid, 100 + pid);
+    }
   }
 
   md.setBrakes(400, 400);
@@ -195,13 +206,18 @@ void reverse(double cm) {
 
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
-    md.setSpeeds(-(200 - pid), -(200 + pid));
+    if (mode == 0) {
+      md.setSpeeds(-(196 - pid), -(200 + pid));
+    }
+    else if (mode == 1) {
+      md.setSpeeds(-(98 - pid), -(100 + pid));
+    }
   }
   md.setBrakes(400, 400);
   delay(100);
 }
 
-int rotateRight(double deg) {
+void rotateRight(double deg) {
   double pid;
   int targetTick;
   integral = 0;
@@ -214,13 +230,19 @@ int rotateRight(double deg) {
 
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
-    md.setSpeeds(200 - pid, -(200 + pid));
+    if (mode == 0) {
+      md.setSpeeds(196 - pid, -(200 + pid));
+    }
+    else if (mode == 1) {
+      md.setSpeeds(98 - pid, -(100 + pid));
+    }
+    
   }
   md.setBrakes(400, 400);
   delay(100);
 }
 
-int rotateLeft(double deg) {
+void rotateLeft(double deg) {
   double pid;
   int targetTick;
   integral = 0;
@@ -233,7 +255,12 @@ int rotateLeft(double deg) {
 
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
-    md.setSpeeds(-(200 - pid), (200 + pid));
+    if (mode == 0) {
+      md.setSpeeds(-(196 - pid), (200 + pid));
+    }
+    else if (mode == 1) {
+      md.setSpeeds(-(98 - pid), (100 + pid));
+    }
   }
   md.setBrakes(400, 400);
   delay(100);
@@ -245,7 +272,7 @@ int rotateLeft(double deg) {
 void readSensors() {
   String output = "";
 
-  output += String(obstaclePosition(calibrateSensorValue(sensorR.distance(), 0)));
+  output += String(obstaclePosition(calibrateSensorValue(sensorL.distance(), 0)));
   output += String(obstaclePosition(calibrateSensorValue(sensorFL.distance(), 1)));
   output += String(obstaclePosition(calibrateSensorValue(sensorFC.distance(), 2)));
   output += String(obstaclePosition(calibrateSensorValue(sensorFR.distance(), 3)));
@@ -255,8 +282,8 @@ void readSensors() {
   Serial.println(output);
 }
 
-int calibrateSensorValue(int dist, int n){
-  int *arr;
+double calibrateSensorValue(double dist, int n){
+  double *arr;
   int i, len;
 
   //int dist = sensor.distance();
@@ -273,34 +300,79 @@ int calibrateSensorValue(int dist, int n){
 
   for (i = 0; i < len; i++){
     if (dist < arr[i]){
-      Serial.println("true, " + String(i) + ", " + String(dist) + ", " + arr[i]);
+      //Serial.println("true, " + String(i) + ", " + String(dist) + ", " + arr[i]);
       int a = (i == 0)? 0 : arr[i-1];
       int offset = (n == 0)? 1 : 0;
 
-      return map(dist, a, arr[i], ((i + offset) * 10), ((i + offset + 1) * 10));
+      return modifiedMap(dist, a, arr[i], ((i + offset) * 10), ((i + offset + 1) * 10));
     }
   }
-  return -1;
+  return i*10;
 }
 
 int obstaclePosition(int val){
   return ((val + 4)) / 10;
 }
 
+double modifiedMap(double x, double in_min, double in_max, double out_min, double out_max) {
+  double temp = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+  temp = (int) (4*temp + .5);
+  return (double) temp/4;
+}
+
 /**
  * ============================== Calibrate robot ==============================
  */
+void calibrateWithRight() {
+  double distL = calibrateSensorValue(sensorRF.distance(), 4);
+  double distR = calibrateSensorValue(sensorRR.distance(), 5);
+  if (((distL + distR) < ((2 * WALL_GAP) - 1)) || ((distL + distR) > ((2 * WALL_GAP) + 1))) {
+    mode = 0;
+    rotateRight(90);
+    mode = 1;
+    calibrateWithFront(0);
+    mode = 0;
+    rotateLeft(90);
+    mode = 1;
+  }
+  else {
+    calibrateAngle(sensorRF, 4, sensorRR, 5, 19);
+  }
+}
+
+void calibrateWithFront(int n) {
+  switch (n) {
+    case 0:
+      calibrateAngle(sensorFL, 1, sensorFR, 3, 17);
+      calibrateDistance(sensorFL, 1);
+      break;
+    case 1:
+      calibrateAngle(sensorFL, 1, sensorFC, 2, 9);
+      calibrateDistance(sensorFC, 2);
+      break;
+    case 2:
+      calibrateAngle(sensorFC, 2, sensorFR, 3, 9);
+      calibrateDistance(sensorFC, 2);
+      break;
+    default:
+      break;
+  }
+}
+ 
 void calibrateAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int dist) {
-  int distL = calibrateSensorValue(sensorL.distance(), arrL);
-  int distR = calibrateSensorValue(sensorR.distance(), arrR);
-  int diff = abs(distL - distR);
-  int mean = diff / 2;
+  double distL = calibrateSensorValue(sensorL.distance(), arrL);
+  double distR = calibrateSensorValue(sensorR.distance(), arrR);
+  double diff = abs(distL - distR);
+  double mean = diff / 2;
 
-  int angle = 0;
+  double angle = 0;
 
-  while (diff > 0.2){
+  
+  while (mean > 0.25){
+    // Serial.println("dist: " + String(distL) + ", " + String(distR) + ", " + String(diff) + ", " + String(mean));
     angle = (asin(mean/dist) * (180/3.14159265));
-    
+    angle = (mean > 0.5) ? angle : angle/2;
+    // Serial.println("angle: " + String(angle));
     if (distL > distR){
       rotateRight(angle);
     }
@@ -311,11 +383,13 @@ void calibrateAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int di
     distL = calibrateSensorValue(sensorL.distance(), arrL);
     distR = calibrateSensorValue(sensorR.distance(), arrR);
     diff = abs(distL - distR);
+    mean = diff / 2;
   }
+  // Serial.println(mean);
 }
 
 void calibrateDistance(SharpIR sensor, int arr){
-  int dist = calibrateSensorValue(sensor.distance(), arr);
+  double dist = calibrateSensorValue(sensor.distance(), arr);
 
   if (dist < WALL_GAP) {
     reverse(WALL_GAP - dist);

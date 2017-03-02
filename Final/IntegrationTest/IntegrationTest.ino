@@ -51,13 +51,11 @@ void loop() {
       break;
     default: 
       flag = false;
-      Serial.println("Invalid Command!");
+      Serial.println("E");
   }
 
   if (flag) {
-    Serial.print(command);
-    if (val != 0) Serial.print(val);
-    Serial.println(" done!");
+    Serial.println("D");
   }
 }
 
