@@ -26,12 +26,12 @@
 
 DualVNH5019MotorShield md;
 
-SharpIR sensorL(pinSensorL, 200, 99, MODEL_LONG);
-SharpIR sensorFL(pinSensorFL, 200, 99, MODEL_SHORT);
-SharpIR sensorFC(pinSensorFC, 200, 99, MODEL_SHORT);
-SharpIR sensorFR(pinSensorFR, 200, 99, MODEL_SHORT);
-SharpIR sensorRF(pinSensorRF, 200, 99, MODEL_SHORT);
-SharpIR sensorRR(pinSensorRR, 200, 99, MODEL_SHORT);
+SharpIR sensorL(pinSensorL, MODEL_LONG);
+SharpIR sensorFL(pinSensorFL, MODEL_SHORT);
+SharpIR sensorFC(pinSensorFC, MODEL_SHORT);
+SharpIR sensorFR(pinSensorFR, MODEL_SHORT);
+SharpIR sensorRF(pinSensorRF, MODEL_SHORT);
+SharpIR sensorRR(pinSensorRR, MODEL_SHORT);
 
 /**
  * ============================== For mapping sensor values ==============================
@@ -39,13 +39,12 @@ SharpIR sensorRR(pinSensorRR, 200, 99, MODEL_SHORT);
  * arrMapping0 is for long-range
  * long-range (start from 20); short-range (start from 10)
  */
-double arrMapping0[] = {20.3, 25.36, 33.7, 43.78, 53.8, 65.5, 74.7, 86.6, 98.4, 110.7, 125.57, 139.8};
-double arrMapping1[] = {9.94, 21, 32.66, 45.5, 61, 81};
-double arrMapping2[] = {9.82, 20.45, 32.55, 44.66, 52.3, 61.4};
-double arrMapping3[] = {10.58, 21.66, 32.43, 35.5, 35.6, 40.1};
-double arrMapping4[] = {10.51, 22.56, 36.4, 48.3, 60.7, 71};
-double arrMapping5[] = {10.21, 21.68, 33.52, 42.5, 50.6, 60, 70, 80};
-
+double arrMapping0[] = {18.74, 23.90, 32.29, 42.15, 52.99, 63.31, 72.90, 86.22, 100.06, 112.23};
+double arrMapping1[] = {10.14, 23.00, 38.02, 54.9, 69.27};
+double arrMapping2[] = {9.57, 20.14, 31.72, 43.05, 54.46};
+double arrMapping3[] = {10.03, 20.40, 30.74, 33.61};
+double arrMapping4[] = {9.91, 20.99, 32.72, 47.02, 60.33};
+double arrMapping5[] = {10.62, 22.22, 35.16, 46.42, 50.75};
 /**
  * ============================== Initiate global variables ==============================
  * initiate global variables that will be used
@@ -115,9 +114,17 @@ void loop() {
       mode = 1;
       calibrateWithRight();
       break;
-    case 'X': case 'x': // calibrate to front wall
+    case 'X': case 'x': // calibrate to front wall (sensor 1, 3)
       mode = 1;
-      calibrateWithFront(val);
+      calibrateWithFront(0);
+      break;
+    case 'Y': case 'y': // calibrate to front wall (sensor 1, 2)
+      mode = 1;
+      calibrateWithFront(1);
+      break;
+    case 'Z': case 'z': // calibrate to front wall (sensor 2, 3)
+      mode = 1;
+      calibrateWithFront(2);
       break;
     default: 
       flag = false;
@@ -145,9 +152,9 @@ double computePID() {
   //Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
   double kp, ki, kd, p, i, d, error, pid;
 
-  kp = 14.3; // trial and error
-  ki = 0;
-  kd = 0;
+  kp = 15; // trial and error
+  ki = 0.005;
+  kd = 0.025;
 
   error = encoderCountLeft - encoderCountRight;
   integral += error;
@@ -173,10 +180,10 @@ void forward(double cm) {
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
     if (mode == 0) {
-      md.setSpeeds(200 - pid, 200 + pid);
+      md.setSpeeds(196 - pid, 200 + pid);
     }
     else if (mode == 1) {
-      md.setSpeeds(100 - pid, 100 + pid);
+      md.setSpeeds(98 - pid, 100 + pid);
     }
   }
 
@@ -196,10 +203,10 @@ void reverse(double cm) {
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
     if (mode == 0) {
-      md.setSpeeds(-(200 - pid), -(200 + pid));
+      md.setSpeeds(-(196 - pid), -(200 + pid));
     }
     else if (mode == 1) {
-      md.setSpeeds(-(100 - pid), -(100 + pid));
+      md.setSpeeds(-(98 - pid), -(100 + pid));
     }
   }
   md.setBrakes(400, 400);
@@ -220,10 +227,10 @@ void rotateRight(double deg) {
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
     if (mode == 0) {
-      md.setSpeeds(200 - pid, -(200 + pid));
+      md.setSpeeds(196 - pid, -(200 + pid));
     }
     else if (mode == 1) {
-      md.setSpeeds(100 - pid, -(100 + pid));
+      md.setSpeeds(98 - pid, -(100 + pid));
     }
     
   }
@@ -245,10 +252,10 @@ void rotateLeft(double deg) {
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
     if (mode == 0) {
-      md.setSpeeds(-(200 - pid), (200 + pid));
+      md.setSpeeds(-(196 - pid), (200 + pid));
     }
     else if (mode == 1) {
-      md.setSpeeds(-(100 - pid), (100 + pid));
+      md.setSpeeds(-(98 - pid), (100 + pid));
     }
   }
   md.setBrakes(400, 400);
@@ -296,7 +303,7 @@ double calibrateSensorValue(double dist, int n){
       return modifiedMap(dist, a, arr[i], ((i + offset) * 10), ((i + offset + 1) * 10));
     }
   }
-  return -1;
+  return i*10;
 }
 
 int obstaclePosition(int val){
@@ -319,7 +326,7 @@ void calibrateWithRight() {
     mode = 0;
     rotateRight(90);
     mode = 1;
-    calibrateWithFront(1);
+    calibrateWithFront(0);
     mode = 0;
     rotateLeft(90);
     mode = 1;
@@ -332,11 +339,11 @@ void calibrateWithRight() {
 void calibrateWithFront(int n) {
   switch (n) {
     case 0:
-      calibrateAngle(sensorFL, 1, sensorFR, 3, 9);
+      calibrateAngle(sensorFL, 1, sensorFR, 3, 17);
       calibrateDistance(sensorFL, 1);
       break;
     case 1:
-      calibrateAngle(sensorFL, 1, sensorFC, 2, 17);
+      calibrateAngle(sensorFL, 1, sensorFC, 2, 9);
       calibrateDistance(sensorFC, 2);
       break;
     case 2:
@@ -358,10 +365,10 @@ void calibrateAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int di
 
   
   while (mean > 0.25){
-    Serial.println("dist: " + String(distL) + ", " + String(distR) + ", " + String(diff) + ", " + String(mean));
+    // Serial.println("dist: " + String(distL) + ", " + String(distR) + ", " + String(diff) + ", " + String(mean));
     angle = (asin(mean/dist) * (180/3.14159265));
     angle = (mean > 0.5) ? angle : angle/2;
-    Serial.println("angle: " + String(angle));
+    // Serial.println("angle: " + String(angle));
     if (distL > distR){
       rotateRight(angle);
     }
@@ -374,7 +381,7 @@ void calibrateAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int di
     diff = abs(distL - distR);
     mean = diff / 2;
   }
-  Serial.println(mean);
+  // Serial.println(mean);
 }
 
 void calibrateDistance(SharpIR sensor, int arr){
