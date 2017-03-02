@@ -24,6 +24,7 @@ SharpIR sensor5(pinSensor5, MODEL_SHORT);
  * arrMapping0 is for long-range
  * long-range (start from 20); short-range (start from 10)
  */
+// values on 28 feb
 //double arrMapping0[] = {20.3, 25.36, 33.7, 43.78, 53.8, 65.5, 74.7, 86.6, 98.4, 110.7, 125.57, 139.8};
 //double arrMapping1[] = {9.94, 21, 32.66, 45.5, 61, 81};
 //double arrMapping2[] = {9.82, 20.45, 32.55, 44.66, 52.3, 61.4};
@@ -31,37 +32,52 @@ SharpIR sensor5(pinSensor5, MODEL_SHORT);
 //double arrMapping4[] = {10.51, 22.56, 36.4, 48.3, 60.7, 71};
 //double arrMapping5[] = {10.21, 21.68, 33.52, 42.5, 50.6, 60, 70, 80};
 
-double arrMapping0[] = {20.3, 25.36, 33.7, 43.78, 53.8, 65.5, 74.7, 86.6, 98.4, 110.7, 125.57, 139.8};
-double arrMapping1[] = {9.39, 21.45, 35.7, 53.5, 61, 81};
-double arrMapping2[] = {9.25, 19.90, 31.5, 44.66, 52.3, 61.4};
-double arrMapping3[] = {9.38, 19.60, 29.2, 35.5, 35.6, 40.1};
-double arrMapping4[] = {10.51, 22.56, 36.4, 48.3, 60.7, 71};
-double arrMapping5[] = {10.21, 21.68, 33.52, 42.5, 50.6, 60, 70, 80};
+// values on 1 mar
+//double arrMapping0[] = {20.3, 25.36, 33.7, 43.78, 53.8, 65.5, 74.7, 86.6, 98.4, 110.7, 125.57, 139.8};
+//double arrMapping1[] = {9.39, 21.45, 35.7, 53.5, 61, 81};
+//double arrMapping2[] = {9.25, 19.90, 31.5, 44.66, 52.3, 61.4};
+//double arrMapping3[] = {9.38, 19.60, 29.2, 35.5, 35.6, 40.1};
+//double arrMapping4[] = {10.51, 22.56, 36.4, 48.3, 60.7, 71};
+//double arrMapping5[] = {10.21, 21.68, 33.52, 42.5, 50.6, 60, 70, 80};
+
+// values on 2 mar
+double arrMapping0[] = {18.74, 23.90, 32.29, 42.15, 52.99, 63.31, 72.90, 86.22, 100.06, 112.23};
+double arrMapping1[] = {10.14, 23.00, 38.02, 54.9, 69.27};
+double arrMapping2[] = {9.57, 20.14, 31.72, 43.05, 54.46};
+double arrMapping3[] = {10.03, 20.40, 30.74, 33.61};
+double arrMapping4[] = {9.91, 20.99, 32.72, 47.02, 60.33};
+double arrMapping5[] = {10.62, 22.22, 35.16, 46.42, 50.75};
 
 void setup() {
   Serial.begin(9600);
 }
 
 void loop() {
+  test();
+//  fastRead(4, 50);
+  delay(1000);
+}
+
+void test() {
 
   double pepe1 = millis();  // takes the time before the loop on the library begins
-  int sameple_size = 5;
-  double dist0 = getMedianDistance(sensor0,sameple_size);
-  double dist1 = getMedianDistance(sensor1,sameple_size);
-  double dist2 = getMedianDistance(sensor2,sameple_size);
-  double dist3 = getMedianDistance(sensor3,sameple_size);
-  double dist4 = getMedianDistance(sensor4,sameple_size);
-  double dist5 = getMedianDistance(sensor5,sameple_size);
+  int sample_size = 10;
+  double dist0 = medianDistance(sensor0, sample_size);
+  double dist1 = medianDistance(sensor1, sample_size);
+  double dist2 = medianDistance(sensor2, sample_size);
+  double dist3 = medianDistance(sensor3, sample_size);
+  double dist4 = medianDistance(sensor4, sample_size);
+  double dist5 = medianDistance(sensor5, sample_size);
   double pepe2 = millis() - pepe1;  // the following gives you the time taken to get the measurement
 
-  double time0 = millis();
-  double distance0 = sensor0.distance();
-  double distance1 = sensor1.distance();
-  double distance2 = sensor2.distance();
-  double distance3 = sensor3.distance();
-  double distance4 = sensor4.distance();
-  double distance5 = sensor5.distance();
-  double end_time0 = millis() - time0;
+   double time0 = millis();
+   double distance0 = sensor0.distance();
+   double distance1 = sensor1.distance();
+   double distance2 = sensor2.distance();
+   double distance3 = sensor3.distance();
+   double distance4 = sensor4.distance();
+   double distance5 = sensor5.distance();
+   double end_time0 = millis() - time0;
 
   
   Serial.print(dist0);
@@ -108,10 +124,10 @@ void loop() {
   Serial.println(end_time0);
   Serial.println();
 
-  delay(1000);
+  //delay(1000);
 }
 
-double getMedianDistance(SharpIR sensor , int sample_size) {
+double medianDistance(SharpIR sensor , int sample_size) {
   RunningMedian sample = RunningMedian(sample_size);
   for (int i = 0; i < sample_size; i ++) {
     sample.add(sensor.distance()); 
@@ -122,8 +138,7 @@ double getMedianDistance(SharpIR sensor , int sample_size) {
 double calibrateSensorValue(double dist, int n){
   double *arr;
   int i, len;
-
-  //int dist = sensor.distance();
+  
   
   switch(n){
     case 0: arr = arrMapping0; len = sizeof(arrMapping0)/sizeof(*arr); break;
@@ -137,24 +152,22 @@ double calibrateSensorValue(double dist, int n){
 
   for (i = 0; i < len; i++){
     if (dist < arr[i]){
-//      Serial.println("true, " + String(i) + ", " + String(dist) + ", " + arr[i]);
       int a = (i == 0)? 0 : arr[i-1];
       int offset = (n == 0)? 1 : 0;
 
       return modifiedMap(dist, a, arr[i], ((i + offset) * 10), ((i + offset + 1) * 10));
     }
   }
-  return -1;
+  
+  return i*10;
 }
 
 int obstaclePosition(int val){
   return ((val + 4)) / 10;
 }
 
-double modifiedMap(double x, double in_min, double in_max, double out_min, double out_max)
-{
+double modifiedMap(double x, double in_min, double in_max, double out_min, double out_max) {
  double temp = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
  temp = (int) (4*temp + .5);
  return (double) temp/4;
 }
-
