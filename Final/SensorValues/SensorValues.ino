@@ -41,11 +41,19 @@ SharpIR sensor5(pinSensor5, MODEL_SHORT);
 //double arrMapping5[] = {10.21, 21.68, 33.52, 42.5, 50.6, 60, 70, 80};
 
 // values on 2 mar
+//double arrMapping0[] = {18.74, 23.90, 32.29, 42.15, 52.99, 63.31, 72.90, 86.22, 100.06, 112.23};
+//double arrMapping1[] = {10.14, 23.00, 38.02, 54.9, 69.27};
+//double arrMapping2[] = {9.57, 20.14, 31.72, 43.05, 54.46};
+//double arrMapping3[] = {10.03, 20.40, 30.74, 33.61};
+//double arrMapping4[] = {9.91, 20.99, 32.72, 47.02, 60.33};
+//double arrMapping5[] = {9.89, 22.22, 35.16, 46.42, 50.75};
+
+// values on 3 mar
 double arrMapping0[] = {18.74, 23.90, 32.29, 42.15, 52.99, 63.31, 72.90, 86.22, 100.06, 112.23};
-double arrMapping1[] = {10.14, 23.00, 38.02, 54.9, 69.27};
+double arrMapping1[] = {9.95, 20.45, 31.26, 42.5, 50.50};
 double arrMapping2[] = {9.57, 20.14, 31.72, 43.05, 54.46};
 double arrMapping3[] = {10.03, 20.40, 30.74, 33.61};
-double arrMapping4[] = {9.91, 20.99, 32.72, 47.02, 60.33};
+double arrMapping4[] = {9.99, 20.6, 31.31, 41.33, 50.67};
 double arrMapping5[] = {10.62, 22.22, 35.16, 46.42, 50.75};
 
 void setup() {
@@ -168,6 +176,7 @@ int obstaclePosition(int val){
 
 double modifiedMap(double x, double in_min, double in_max, double out_min, double out_max) {
  double temp = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
- temp = (int) (4*temp + .5);
- return (double) temp/4;
+// temp = (int) (4*temp + .5);
+// return (double) temp/4;
+return temp;
 }

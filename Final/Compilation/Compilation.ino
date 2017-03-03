@@ -24,6 +24,10 @@
 
 #define WALL_GAP 10
 
+#define SPEED_MOVE 200
+#define SPEED_SPIN 200
+#define SPEED_CALIBRATE 100
+#define MOTOR_MULTIPLIER 0.92
 DualVNH5019MotorShield md;
 
 SharpIR sensorL(pinSensorL, MODEL_LONG);
@@ -40,10 +44,10 @@ SharpIR sensorRR(pinSensorRR, MODEL_SHORT);
  * long-range (start from 20); short-range (start from 10)
  */
 double arrMapping0[] = {18.74, 23.90, 32.29, 42.15, 52.99, 63.31, 72.90, 86.22, 100.06, 112.23};
-double arrMapping1[] = {10.14, 23.00, 38.02, 54.9, 69.27};
+double arrMapping1[] = {9.95, 20.45, 31.26, 42.5, 50.50};
 double arrMapping2[] = {9.57, 20.14, 31.72, 43.05, 54.46};
 double arrMapping3[] = {10.03, 20.40, 30.74, 33.61};
-double arrMapping4[] = {9.91, 20.99, 32.72, 47.02, 60.33};
+double arrMapping4[] = {9.99, 20.6, 31.31, 41.33, 50.67};
 double arrMapping5[] = {10.62, 22.22, 35.16, 46.42, 50.75};
 /**
  * ============================== Initiate global variables ==============================
@@ -76,13 +80,13 @@ void loop() {
 
   while (1){
     if (Serial.available()) {
-      delay(50);
-      while (Serial.available()) {
-        ch = Serial.read();
-        commandBuffer[i] = ch;
-        i++;
+      ch = Serial.read();
+      commandBuffer[i] = ch;
+      i++;
+      
+      if (ch == '|'){
+        break;
       }
-      break;
     }
   }
   Serial.print("CommandBuffer : " + );
@@ -92,7 +96,7 @@ void loop() {
   Serial.println();
   command = commandBuffer[0];
 
-  while (j < i) {
+  while (j < (i-1)) {
     val *= 10; 
     val = val + (commandBuffer[j] - 48);
     j++;
@@ -112,6 +116,7 @@ void loop() {
       (val == 0) ? rotateRight(90) : rotateRight(val);
       break;
     case 'S': case 's': // readSensors
+      flag = false;
       readSensors();
       break;
     case 'C': case 'c': // calibrate to right wall
@@ -134,10 +139,12 @@ void loop() {
       flag = false;
       Serial.println("E");
   }
-
-  if (flag) {
-    Serial.println("D");
+  if (!Serial.available()) {
+    if (flag) {
+      Serial.println("D");
+    }
   }
+  
 }
 
 
@@ -153,7 +160,7 @@ void incRight() {
 }
 
 double computePID() {
-  //Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
+//  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
   double kp, ki, kd, p, i, d, error, pid;
 
   kp = 15; // trial and error
@@ -179,15 +186,15 @@ void forward(double cm) {
   integral = 0;
   encoderCountLeft = encoderCountRight = prevTick = 0;
   
-  targetTick = cm * 29; // Caliberated to 30.25 ticks per cm
+  targetTick = cm * 30.3; // Caliberated to 30.25 ticks per cm
 
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
     if (mode == 0) {
-      md.setSpeeds(196 - pid, 200 + pid);
+      md.setSpeeds((SPEED_MOVE * MOTOR_MULTIPLIER) - pid, SPEED_MOVE + pid);
     }
     else if (mode == 1) {
-      md.setSpeeds(98 - pid, 100 + pid);
+      md.setSpeeds((SPEED_CALIBRATE * MOTOR_MULTIPLIER) - pid, SPEED_CALIBRATE + pid);
     }
   }
 
@@ -202,15 +209,15 @@ void reverse(double cm) {
   integral = 0;
   encoderCountLeft = encoderCountRight = prevTick = 0;
 
-  targetTick = cm * 29; // Caliberated to 30.25 ticks per cm
+  targetTick = cm * 30.3; // Caliberated to 30.25 ticks per cm
 
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
     if (mode == 0) {
-      md.setSpeeds(-(196 - pid), -(200 + pid));
+      md.setSpeeds(-((SPEED_MOVE * MOTOR_MULTIPLIER) - pid), -(SPEED_MOVE + pid));
     }
     else if (mode == 1) {
-      md.setSpeeds(-(98 - pid), -(100 + pid));
+      md.setSpeeds(-((SPEED_CALIBRATE * MOTOR_MULTIPLIER) - pid), -(SPEED_CALIBRATE + pid));
     }
   }
   md.setBrakes(400, 400);
@@ -231,10 +238,10 @@ void rotateRight(double deg) {
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
     if (mode == 0) {
-      md.setSpeeds(196 - pid, -(200 + pid));
+      md.setSpeeds((SPEED_SPIN * MOTOR_MULTIPLIER) - pid, -(SPEED_SPIN + pid));
     }
     else if (mode == 1) {
-      md.setSpeeds(98 - pid, -(100 + pid));
+      md.setSpeeds((SPEED_CALIBRATE * MOTOR_MULTIPLIER) - pid, -(SPEED_CALIBRATE + pid));
     }
     
   }
@@ -256,10 +263,10 @@ void rotateLeft(double deg) {
   while (encoderCountLeft < targetTick ) {
     pid = computePID();
     if (mode == 0) {
-      md.setSpeeds(-(196 - pid), (200 + pid));
+      md.setSpeeds(-((SPEED_SPIN * MOTOR_MULTIPLIER) - pid), (SPEED_SPIN + pid));
     }
     else if (mode == 1) {
-      md.setSpeeds(-(98 - pid), (100 + pid));
+      md.setSpeeds(-((SPEED_CALIBRATE * MOTOR_MULTIPLIER) - pid), (SPEED_CALIBRATE + pid));
     }
   }
   md.setBrakes(400, 400);
@@ -271,14 +278,14 @@ void rotateLeft(double deg) {
  */
 void readSensors() {
   String output = "";
-
-  output += String(obstaclePosition(calibrateSensorValue(sensorL.distance(), 0)));
-  output += String(obstaclePosition(calibrateSensorValue(sensorFL.distance(), 1)));
-  output += String(obstaclePosition(calibrateSensorValue(sensorFC.distance(), 2)));
-  output += String(obstaclePosition(calibrateSensorValue(sensorFR.distance(), 3)));
-  output += String(obstaclePosition(calibrateSensorValue(sensorRF.distance(), 4)));
-  output += String(obstaclePosition(calibrateSensorValue(sensorRR.distance(), 5)));
-
+  
+  output += String(obstaclePosition(calibrateSensorValue(sensorFL.distance(), 1), 1));
+  output += String(obstaclePosition(calibrateSensorValue(sensorFC.distance(), 2), 1));
+  output += String(obstaclePosition(calibrateSensorValue(sensorFR.distance(), 3), 1));
+  output += String(obstaclePosition(calibrateSensorValue(sensorRF.distance(), 4), 1));
+  output += String(obstaclePosition(calibrateSensorValue(sensorRR.distance(), 5), 1));
+  output += String(obstaclePosition(calibrateSensorValue(sensorL.distance(), 0), 0));
+  
   Serial.println(output);
 }
 
@@ -310,14 +317,33 @@ double calibrateSensorValue(double dist, int n){
   return i*10;
 }
 
-int obstaclePosition(int val){
-  return ((val + 4)) / 10;
+int obstaclePosition(int val, int shortrange){
+  int tmp = 0;
+  if (shortrange == 1) {
+    tmp = (val + 4) / 10;
+    if ((tmp >= 1) && (tmp <= 3)) {
+      return tmp;
+    }
+    else {
+      return 0; 
+    }    
+  }
+  else {
+    tmp = (val - 6) / 10;
+    if ((tmp >= 1) && (tmp <= 5)) {
+      return tmp;
+    }
+    else {
+      return 0; 
+    }
+  }
 }
 
 double modifiedMap(double x, double in_min, double in_max, double out_min, double out_max) {
   double temp = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-  temp = (int) (4*temp + .5);
-  return (double) temp/4;
+  // temp = (int) (4*temp + .5);
+  // return (double) temp/4;
+  return temp;
 }
 
 /**
@@ -334,6 +360,7 @@ void calibrateWithRight() {
     mode = 0;
     rotateLeft(90);
     mode = 1;
+//    calibrateWithRight();
   }
   else {
     calibrateAngle(sensorRF, 4, sensorRR, 5, 19);
