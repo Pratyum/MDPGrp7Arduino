@@ -59,6 +59,8 @@ double integral;
 
 int mode,loop_counter;
 
+bool calibrateAutoChecked;
+
 void setup() {
   Serial.begin(9600);
 
@@ -68,7 +70,8 @@ void setup() {
 
   PCintPort::attachInterrupt(pinEncoderL, incLeft, RISING);
   PCintPort::attachInterrupt(pinEncoderR, incRight, RISING);
-  loop_counter = 6;
+  loop_counter = 0;
+  calibrateAutoChecked = true;
 }
 
 void loop() {
@@ -89,6 +92,9 @@ void loop() {
         break;
       }
     }
+    else if ((loop_counter >= 3) && (calibrateAutoChecked == false)) {
+      calibrateAuto();
+    }
   }
   // Serial.print("CommandBuffer : " + );
   // for(int i=0; i<10; i++){
@@ -106,46 +112,48 @@ void loop() {
   switch (command) {
     case 'F': case 'f': // forward
       (val == 0) ? forward(10) : forward(val * 10);
-      calibrateAuto();
-      loop_counter--;  
+      loop_counter++;
+      calibrateAutoChecked = false;
       break;
     case 'B': case 'b': // reverse
       (val == 0) ? reverse(10) : reverse(val * 10);
-      calibrateAuto();
-      loop_counter--;  
+      loop_counter++; 
+      calibrateAutoChecked = false;
       break;
     case 'L': case 'l': // rotateLeft
       (val == 0) ? rotateLeft(90) : rotateLeft(val);
-      loop_counter--;  
+      loop_counter++;  
+      calibrateAutoChecked = false;
       break;
     case 'R': case 'r': // rotateRight
       (val == 0) ? rotateRight(90) : rotateRight(val);
-      loop_counter--;  
+      loop_counter++;  
+      calibrateAutoChecked = false;
       break;
     case 'S': case 's': // readSensors
       flag = false;
       readSensors();
-//      loop_counter--;  
+      // loop_counter++;  
       break;
     case 'C': case 'c': // calibrate to right wall
       mode = 1;
       calibrateWithRight();
-//      loop_counter--;  
+      // loop_counter++;  
       break;
     case 'X': case 'x': // calibrate to front wall (sensor 1, 3)
       mode = 1;
       calibrateWithFront(0);
-//      loop_counter--;  
+      // loop_counter++;  
       break;
     case 'Y': case 'y': // calibrate to front wall (sensor 1, 2)
       mode = 1;
       calibrateWithFront(1);
-//      loop_counter--;  
+      // loop_counter++;  
       break;
     case 'Z': case 'z': // calibrate to front wall (sensor 2, 3)
       mode = 1;
       calibrateWithFront(2);
-//      loop_counter--;  
+      // loop_counter++;  
       break;
     default: 
       flag = false;
@@ -154,12 +162,11 @@ void loop() {
 
 
   
-//  if (!Serial.available()) {
+  if (!Serial.available()) {
     if (flag) {
       Serial.println("D");
     }
-//  }
-  
+  }
 }
 
 
@@ -441,30 +448,25 @@ void calibrateDistance(SharpIR sensor, int arr){
   }
 }
 
-void calibrateAuto(){
-//  if(loop_counter <= 0){
-//    if((obstaclePosition(calibrateSensorValue(sensorFL.distance(), 1), 1) < 2 ) && (obstaclePosition(calibrateSensorValue(sensorFR.distance(), 1), 1) < 2 )){
-//      calibrateWithFront(0);
-////      Serial.println("Front 0");
-//      loop_counter = 6;
-//    }else if((obstaclePosition(calibrateSensorValue(sensorFL.distance(), 1), 1) < 2 ) && (obstaclePosition(calibrateSensorValue(sensorFC.distance(), 1), 1) < 2 )){
-//      calibrateWithFront(1);
-////      Serial.println("Front 1");
-//      loop_counter = 6;
-//    }else if((obstaclePosition(calibrateSensorValue(sensorFC.distance(), 1), 1) < 2 ) && (obstaclePosition(calibrateSensorValue(sensorFR.distance(), 1), 1) < 2 )){
-//      calibrateWithFront(2);
-////      Serial.println("Front 2");
-//      loop_counter = 6 ;
-//    }
+void calibrateAuto() {
+  Serial.println("check for auto calibrate");
+  calibrateAutoChecked = true;
+  if((obstaclePosition(calibrateSensorValue(sensorRF.distance(), 4), 1) == 1) && (obstaclePosition(calibrateSensorValue(sensorRR.distance(), 5), 1) == 1)) {
+    calibrateWithRight();
+    loop_counter = 0;
+  }
 
-    if((obstaclePosition(calibrateSensorValue(sensorRF.distance(), 1), 1) < 2 ) && (obstaclePosition(calibrateSensorValue(sensorRR.distance(), 1), 1) < 2 )){
-      calibrateWithRight();
-//      Serial.println("D");
-      loop_counter = 6;
-    }else {
-    
-    }
-    
-//  }
+  if((obstaclePosition(calibrateSensorValue(sensorFL.distance(), 1), 1) == 1 ) && (obstaclePosition(calibrateSensorValue(sensorFR.distance(), 3), 1) == 1 )) {
+    calibrateWithFront(0);
+    loop_counter = 0;
+  }
+  else if((obstaclePosition(calibrateSensorValue(sensorFL.distance(), 1), 1) == 1 ) && (obstaclePosition(calibrateSensorValue(sensorFC.distance(), 2), 1) == 1 )) {
+    calibrateWithFront(1);
+    loop_counter = 0;
+  }
+  else if((obstaclePosition(calibrateSensorValue(sensorFC.distance(), 2), 1) == 1 ) && (obstaclePosition(calibrateSensorValue(sensorFR.distance(), 3), 1) == 1 )) {
+    calibrateWithFront(2);
+    loop_counter = 0;
+  }
 }
 
