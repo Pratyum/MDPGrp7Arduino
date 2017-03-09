@@ -71,7 +71,7 @@ void setup() {
   PCintPort::attachInterrupt(pinEncoderL, incLeft, RISING);
   PCintPort::attachInterrupt(pinEncoderR, incRight, RISING);
   loop_counter = 0;
-  calibrateAutoChecked = false;
+  calibrateAutoChecked = true;
 }
 
 void loop() {
@@ -92,40 +92,41 @@ void loop() {
         break;
       }
     }
-    else{
-      if (calibrateAutoChecked == false){
-        if ((obstaclePosition(calibrateSensorValue(sensorRF.distance(), 4), 1) == 1) && (obstaclePosition(calibrateSensorValue(sensorRR.distance(), 5), 1) == 1)){
-        //Calibrate Right
       
-        if((obstaclePosition(calibrateSensorValue(sensorFL.distance(), 1), 1) == 1 ) && (obstaclePosition(calibrateSensorValue(sensorFR.distance(), 3), 1) == 1 )){
-          //Calibrate Front
-          calibrateWithRight();
-          calibrateWithFront(0);
-          Serial.println("Front + Right Detected");
-          calibrateAutoChecked = true;
-          loop_counter = 0;
-        }
-        else if((obstaclePosition(calibrateSensorValue(sensorFL.distance(), 1), 1) == 1 ) && (obstaclePosition(calibrateSensorValue(sensorFC.distance(), 2), 1) == 1 )){
-          //Calibrate Front
-          calibrateWithRight();
-          calibrateWithFront(1);
-          Serial.println("Front + Right Detected");
-          calibrateAutoChecked = true;
-          loop_counter = 0;
-        }
-        else if((obstaclePosition(calibrateSensorValue(sensorFC.distance(), 2), 1) == 1 ) && (obstaclePosition(calibrateSensorValue(sensorFR.distance(), 3), 1) == 1 )){
-          calibrateWithFront(3);
-          calibrateWithRight();
-          Serial.println("Front + Right Detected");
-          calibrateAutoChecked = true;
-          loop_counter = 0;
-        } 
-      }
-      else if ((loop_counter >= 3) && (calibrateAutoChecked == false)) {
-        calibrateAuto();
-      } 
-      }
-    }
+//    else{
+//      if (calibrateAutoChecked == false){
+//        if ((obstaclePosition(calibrateSensorValue(sensorRF.distance(), 4), 1) == 1) && (obstaclePosition(calibrateSensorValue(sensorRR.distance(), 5), 1) == 1)){
+//        //Calibrate Right
+//      
+//        if((obstaclePosition(calibrateSensorValue(sensorFL.distance(), 1), 1) == 1 ) && (obstaclePosition(calibrateSensorValue(sensorFR.distance(), 3), 1) == 1 )){
+//          //Calibrate Front
+//          calibrateWithRight();
+//          calibrateWithFront(0);
+//          Serial.println("Front + Right Detected");
+//          calibrateAutoChecked = true;
+//          loop_counter = 0;
+//        }
+//        else if((obstaclePosition(calibrateSensorValue(sensorFL.distance(), 1), 1) == 1 ) && (obstaclePosition(calibrateSensorValue(sensorFC.distance(), 2), 1) == 1 )){
+//          //Calibrate Front
+//          calibrateWithRight();
+//          calibrateWithFront(1);
+//          Serial.println("Front + Right Detected");
+//          calibrateAutoChecked = true;
+//          loop_counter = 0;
+//        }
+//        else if((obstaclePosition(calibrateSensorValue(sensorFC.distance(), 2), 1) == 1 ) && (obstaclePosition(calibrateSensorValue(sensorFR.distance(), 3), 1) == 1 )){
+//          calibrateWithFront(3);
+//          calibrateWithRight();
+//          Serial.println("Front + Right Detected");
+//          calibrateAutoChecked = true;
+//          loop_counter = 0;
+//        } 
+//      }
+//      if ((loop_counter >= 3) && (calibrateAutoChecked == false)) {
+//        calibrateAuto();
+//      } 
+//      }
+//    }
   }
   // Serial.print("CommandBuffer : " + );
   // for(int i=0; i<10; i++){
@@ -193,7 +194,13 @@ void loop() {
   
   if (!Serial.available()) {
     if (flag) {
-      Serial.println("D");
+      if ((loop_counter >= 3) && (calibrateAutoChecked == false)) {
+        calibrateAuto();
+        Serial.println("D");
+      } 
+      else{
+        Serial.println("D");
+      }
     }
   }
 }
@@ -501,5 +508,7 @@ void calibrateAuto() {
     loop_counter = 0;
     Serial.println("Calibrated4");
   }
+
+  Serial.println("d");
 }
 
