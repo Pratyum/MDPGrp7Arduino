@@ -6,8 +6,8 @@
 
 DualVNH5019MotorShield md;
 
-#define SPEED_MOVE 300
-#define SPEED_SPIN 300
+#define SPEED_MOVE 250
+#define SPEED_SPIN 250
 #define SPEED_CALIBRATE 100
 #define MOTOR_MULTIPLIER 0.92
 
@@ -39,12 +39,15 @@ void setup() {
 }
 
 void loop() {
-  forward(50);
+  forward(60);
 //  reverse(120);
 //  rotateRight(90);
 //  rotateRight(90);
 //  rotateRight(90);
 //  rotateRight(90);
+//  rotateLeft(90);
+//  rotateLeft(90);
+//  rotateLeft(90);
 //  rotateLeft(90);
   delay(1000000);
 }
@@ -58,7 +61,7 @@ void incRight() {
 }
 
 double computePID() {
-  //Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
+  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
   double kp, ki, kd, p, i, d, error, pid;
 
   kp = 15; // trial and error
@@ -84,7 +87,7 @@ void forward(double cm) {
   integral = 0;
   encoderCountLeft = encoderCountRight = prevTick = 0;
   
-  targetTick = cm * 29.7; // Caliberated to 30.25 ticks per cm
+  targetTick = cm * 30.3; // Caliberated to 30.25 ticks per cm
 
   if (mode == 0) {
     while (encoderCountLeft < min(50, targetTick)) {
@@ -151,8 +154,8 @@ void rotateRight(double deg) {
   integral = 0;
   encoderCountLeft = encoderCountRight = prevTick = 0;
 
-  if (deg <= 90) targetTick = deg * 4.68;
-  else if (deg <= 180 ) targetTick = deg * 4.56;
+  if (deg <= 90) targetTick = deg * 4.39; //4.523
+  else if (deg <= 180 ) targetTick = deg * 4.62;
   else if (deg <= 360 ) targetTick = deg * 4.675;
   else targetTick = deg * 4.65;
 
@@ -187,7 +190,7 @@ void rotateLeft(double deg) {
   integral = 0;
   encoderCountLeft = encoderCountRight = prevTick = 0;
 
-  if (deg <= 90) targetTick = deg * 4.424;
+  if (deg <= 90) targetTick = deg * 4.39;
   else if (deg <= 180 ) targetTick = deg * 4.51;
   else if (deg <= 360 ) targetTick = deg * 4.51;
   else targetTick = deg * 4.65;
