@@ -6,9 +6,26 @@
 
 DualVNH5019MotorShield md;
 
+#define SPEED_MOVE 300
+#define SPEED_SPIN 300
+#define SPEED_CALIBRATE 100
+#define MOTOR_MULTIPLIER 0.92
+
+//29.70
+/*
+423
+835
+820
+820
+422
+412
+//
+*/
 volatile long encoderCountLeft, encoderCountRight;
 long prevTick;
 double integral;
+
+int mode = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -22,8 +39,11 @@ void setup() {
 }
 
 void loop() {
-  forward(120);
+  forward(50);
 //  reverse(120);
+//  rotateRight(90);
+//  rotateRight(90);
+//  rotateRight(90);
 //  rotateRight(90);
 //  rotateLeft(90);
   delay(1000000);
@@ -38,7 +58,7 @@ void incRight() {
 }
 
 double computePID() {
-  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
+  //Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
   double kp, ki, kd, p, i, d, error, pid;
 
   kp = 15; // trial and error
@@ -64,11 +84,27 @@ void forward(double cm) {
   integral = 0;
   encoderCountLeft = encoderCountRight = prevTick = 0;
   
-  targetTick = cm * 29; // Caliberated to 30.25 ticks per cm
+  targetTick = cm * 29.7; // Caliberated to 30.25 ticks per cm
 
-  while (encoderCountLeft < targetTick ) {
-    pid = computePID();
-    md.setSpeeds(196 - pid, 200 + pid);
+  if (mode == 0) {
+    while (encoderCountLeft < min(50, targetTick)) {
+      pid = computePID();
+      md.setSpeeds((0.5 * SPEED_MOVE * MOTOR_MULTIPLIER) - pid, (0.5 * SPEED_MOVE) + pid);
+    }
+    while (encoderCountLeft < targetTick  - 50) {
+      pid = computePID();
+      md.setSpeeds((SPEED_MOVE * MOTOR_MULTIPLIER) - pid, SPEED_MOVE + pid);
+    }
+    while (encoderCountLeft < targetTick) {
+      pid = computePID();
+      md.setSpeeds((0.5 * SPEED_MOVE * MOTOR_MULTIPLIER) - pid, (0.5 * SPEED_MOVE) + pid);
+    }
+  }
+  else if (mode == 1) {
+    while (encoderCountLeft < targetTick) {
+      pid = computePID();
+      md.setSpeeds((SPEED_CALIBRATE * MOTOR_MULTIPLIER) - pid, SPEED_CALIBRATE + pid);
+    }
   }
 
   md.setBrakes(400, 400);
@@ -82,12 +118,29 @@ void reverse(double cm) {
   integral = 0;
   encoderCountLeft = encoderCountRight = prevTick = 0;
 
-  targetTick = cm * 29; // Caliberated to 30.25 ticks per cm
+  targetTick = cm * 30.3; // Caliberated to 30.25 ticks per cm
 
-  while (encoderCountLeft < targetTick ) {
-    pid = computePID();
-    md.setSpeeds(-(300 - pid), -(300 + pid));
+  if (mode == 0) {
+    while (encoderCountLeft < min(50, targetTick)) {
+      pid = computePID();
+      md.setSpeeds(-((0.5 * SPEED_MOVE * MOTOR_MULTIPLIER) - pid), -((0.5 * SPEED_MOVE) + pid));
+    }
+    while (encoderCountLeft < targetTick - 50) {
+      pid = computePID();
+      md.setSpeeds(-((SPEED_MOVE * MOTOR_MULTIPLIER) - pid), -(SPEED_MOVE + pid));
+    }
+    while (encoderCountLeft < targetTick) {
+      pid = computePID();
+      md.setSpeeds(-((0.5 * SPEED_MOVE * MOTOR_MULTIPLIER) - pid), -((0.5 * SPEED_MOVE) + pid));
+    }
   }
+  else if (mode == 1) {
+    while (encoderCountLeft < targetTick) {
+      pid = computePID();
+      md.setSpeeds(-((SPEED_CALIBRATE * MOTOR_MULTIPLIER) - pid), -(SPEED_CALIBRATE + pid));
+    }
+  }
+
   md.setBrakes(400, 400);
   delay(100);
 }
@@ -98,16 +151,32 @@ void rotateRight(double deg) {
   integral = 0;
   encoderCountLeft = encoderCountRight = prevTick = 0;
 
-  if (deg <= 90) targetTick = deg * 4.423;
-  else if (deg <= 180 ) targetTick = deg * 4.62;
+  if (deg <= 90) targetTick = deg * 4.68;
+  else if (deg <= 180 ) targetTick = deg * 4.56;
   else if (deg <= 360 ) targetTick = deg * 4.675;
   else targetTick = deg * 4.65;
 
-  while (encoderCountLeft < targetTick ) {
-    pid = computePID();
-    md.setSpeeds(200 - pid, -(200 + pid));
-    
+  if (mode == 0) {
+    while (encoderCountLeft < min(50, targetTick)) {
+      pid = computePID();
+      md.setSpeeds((0.5 * SPEED_SPIN * MOTOR_MULTIPLIER) - pid, -((0.5 * SPEED_SPIN) + pid));
+    }
+    while (encoderCountLeft < targetTick - 50) {
+      pid = computePID();
+      md.setSpeeds((SPEED_SPIN * MOTOR_MULTIPLIER) - pid, -(SPEED_SPIN + pid));
+    }
+    while (encoderCountLeft < targetTick) {
+      pid = computePID();
+      md.setSpeeds((0.5 * SPEED_SPIN * MOTOR_MULTIPLIER) - pid, -((0.5 * SPEED_SPIN) + pid));
+    }
   }
+  else if (mode == 1) {
+    while (encoderCountLeft < targetTick) {
+      pid = computePID();
+      md.setSpeeds((SPEED_CALIBRATE * MOTOR_MULTIPLIER) - pid, -(SPEED_CALIBRATE + pid));
+    }
+  }
+
   md.setBrakes(400, 400);
   delay(100);
 }
@@ -123,10 +192,27 @@ void rotateLeft(double deg) {
   else if (deg <= 360 ) targetTick = deg * 4.51;
   else targetTick = deg * 4.65;
 
-  while (encoderCountLeft < targetTick ) {
-    pid = computePID();
-    md.setSpeeds(-(200 - pid), (200 + pid));
+  if (mode == 0) {
+    while (encoderCountLeft < min(50, targetTick)) {
+      pid = computePID();
+      md.setSpeeds(-((0.5 * SPEED_SPIN * MOTOR_MULTIPLIER) - pid), ((0.5 * SPEED_SPIN) + pid));
+    }
+    while (encoderCountLeft < targetTick - 50) {
+      pid = computePID();
+      md.setSpeeds(-((SPEED_SPIN * MOTOR_MULTIPLIER) - pid), (SPEED_SPIN + pid));
+    }
+    while (encoderCountLeft < targetTick) {
+      pid = computePID();
+      md.setSpeeds(-((0.5 * SPEED_SPIN * MOTOR_MULTIPLIER) - pid), ((0.5 * SPEED_SPIN) + pid));
+    }
   }
+  else if (mode == 1) {
+    while (encoderCountLeft < targetTick) {
+      pid = computePID();
+      md.setSpeeds(-((SPEED_CALIBRATE * MOTOR_MULTIPLIER) - pid), (SPEED_CALIBRATE + pid));
+    }
+  }
+
   md.setBrakes(400, 400);
   delay(100);
 }
