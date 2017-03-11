@@ -1,7 +1,6 @@
 /*
  * Jeffrey's First Program
  */
-
 int switchPin = 8;
 int ledPin = 11;
 boolean lastButton = LOW;
