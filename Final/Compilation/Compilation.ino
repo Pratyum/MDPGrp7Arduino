@@ -32,7 +32,7 @@
 #define SPEED_CALIBRATE 100
 #define MOTOR_MULTIPLIER 0.90
 
-#define STEPS_TO_CALIBRATE 3
+#define STEPS_TO_CALIBRATE 5
 
 DualVNH5019MotorShield md;
 
@@ -65,7 +65,7 @@ volatile long encoderCountLeft, encoderCountRight;
 long prevTick;
 double integral;
 
-int mode, loop_counter;
+int mode, step_counter;
 
 bool calibrateAutoChecked;
 
@@ -83,13 +83,15 @@ void setup() {
 
   PCintPort::attachInterrupt(pinEncoderL, incLeft, RISING);
   PCintPort::attachInterrupt(pinEncoderR, incRight, RISING);
-  loop_counter = 0;
+  step_counter = 0;
   calibrateAutoChecked = true;
 }
 
 void loop() {
-  int i = 0, j = 1, val = 0;
-  char commandBuffer[10];
+  int i = 0, j = 1;
+  double val;
+  String valString = "";
+  char commandBuffer[20];
   char command, ch;
   bool flag = true;
 
@@ -112,59 +114,60 @@ void loop() {
   command = commandBuffer[0];
 
   while (j < (i-1)) {
-    val *= 10; 
-    val = val + (commandBuffer[j] - 48);
+    valString += commandBuffer[j];
     j++;
   }
   
+  val = valString.toDouble();
+
   switch (command) {
     case 'F': case 'f': // forward
       flag = (val == 0) ? forward(10) : forward(val * 10);
       if (!flag) {
         Serial.println("E");
       }
-      loop_counter++;
+      step_counter++;
       delay(100);
       break;
     case 'B': case 'b': // reverse
       (val == 0) ? reverse(10) : reverse(val * 10);
-      loop_counter++;
+      step_counter++;
       delay(100);
       break;
     case 'L': case 'l': // rotateLeft
       (val == 0) ? rotateLeft(90) : rotateLeft(val);
-      loop_counter++;
+      step_counter++;
       delay(100);
       break;
     case 'R': case 'r': // rotateRight
       (val == 0) ? rotateRight(90) : rotateRight(val);
-      loop_counter++;
+      step_counter++;
       delay(100);
       break;
     case 'S': case 's': // readSensors
       flag = false;
       readSensors();
-      // loop_counter++;  
+      // step_counter++;  
       break;
     case 'C': case 'c': // calibrate to right wall
       mode = 1;
       calibrateWithRight();
-      // loop_counter++;  
+      // step_counter++;  
       break;
-    case 'X': case 'x': // calibrate to front wall (sensor 1, 3)
+    case 'X': case 'x': case 'Y': case 'y': case 'Z': case 'z': // calibrate to front wall (sensor 1, 3)
       mode = 1;
       calibrateWithFront();
-      // loop_counter++;  
+      // step_counter++;  
       break;
     case 'Y': case 'y': // calibrate to front wall (sensor 1, 2)
       mode = 1;
 //      calibrateWithFront(1);
-      // loop_counter++;  
+      // step_counter++;  
       break;
     case 'Z': case 'z': // calibrate to front wall (sensor 2, 3)
       mode = 1;
 //      calibrateWithFront(2);
-      // loop_counter++;  
+      // step_counter++;  
       break;
     default: 
       flag = false;
@@ -402,35 +405,35 @@ void readSensors() {
   // check for best opportunity to calibrate
   if (((abs(distFL - distFR) < 5) && ((distFL + distFR) <= (3 * WALL_GAP))) || ((abs(distFL - distFC) < 5) && ((distFL + distFC) <= (3 * WALL_GAP))) || ((abs(distFC - distFR) < 5) && ((distFC + distFR) <= (3 * WALL_GAP)))) {
     if ((distRF <= (WALL_GAP + 4)) || (distRR <= (WALL_GAP + 4))) {
-      loop_counter = STEPS_TO_CALIBRATE;
+      step_counter = STEPS_TO_CALIBRATE;
     }
   }
   else if ((abs(distRF - distRR) < 5) && ((distRF + distRR) <= (3 * WALL_GAP))) {
     if ((distFL <= (WALL_GAP + 4)) || (distFC <= (WALL_GAP + 4)) || (distFR <= (WALL_GAP + 4))) {
-      loop_counter = STEPS_TO_CALIBRATE;
+      step_counter = STEPS_TO_CALIBRATE;
     }
   }
 
   // calibrate if above steps count
-  if (loop_counter >= STEPS_TO_CALIBRATE) {
+  if (step_counter >= STEPS_TO_CALIBRATE) {
     // check if target side can calibrate angle
     if ((abs(distFL - distFR) < 5) && ((distFL + distFR) <= (3 * WALL_GAP))) {
       calibrateAngle(sensorFL, 1, sensorFR, 3, 17);
       calibrateDistance(sensorFL, 1);
       calibrate_front = 1;
-      loop_counter = 0;
+      step_counter = 0;
     }
     else if ((abs(distFL - distFC) < 5) && ((distFL + distFC) <= (3 * WALL_GAP))) {
       calibrateAngle(sensorFL, 1, sensorFC, 2, 9);
       calibrateDistance(sensorFC, 2);
       calibrate_front = 2;
-      loop_counter = 0;
+      step_counter = 0;
     }
     else if ((abs(distFC - distFR) < 5) && ((distFC + distFR) <= (3 * WALL_GAP))) {
       calibrateAngle(sensorFC, 2, sensorFR, 3, 9);
       calibrateDistance(sensorFC, 2);
       calibrate_front = 3;
-      loop_counter = 0;
+      step_counter = 0;
     }
 
     // check for 1 obstacle on other side
@@ -484,7 +487,7 @@ void readSensors() {
     else  {
       // check for right wall and calibrate
       if ((abs(distRF - distRR) < 5) && ((distRF + distRR) <= (3 * WALL_GAP))) {
-        loop_counter = 0;
+        step_counter = 0;
 
         // check to see if there is enough clearance from wall
         if (distFL <= (WALL_GAP + 4)) {
@@ -565,6 +568,7 @@ void readSensors() {
     }
   }
 
+  // prepare to return obstacle position to algo
   int posFL = obstaclePosition(distFL, 1);
   int posFC = obstaclePosition(distFC, 1);
   int posFR = obstaclePosition(distFR, 1);
@@ -572,6 +576,7 @@ void readSensors() {
   int posRR = obstaclePosition(distRR, 1);
   int posL = obstaclePosition(distL, 0);
 
+  // check for any values that are not satisfied
   for (i = 0; i < 10 ; i++) {
     if (posFL != -1) {
       break;
@@ -630,6 +635,7 @@ void readSensors() {
     }
   }
 
+  // ensure that there are no "-1" sensor values
   posFL = (posFL == -1) ? 0 : posFL;
   posFC = (posFC == -1) ? 0 : posFC;
   posFR = (posFR == -1) ? 0 : posFR;
@@ -637,6 +643,7 @@ void readSensors() {
   posRR = (posRR == -1) ? 0 : posRR;
   posL = (posL == -1) ? 0 : posL;
 
+  // concatenate all position into a string and send
   output += String(posFL);
   output += String(posFC);
   output += String(posFR);
@@ -730,7 +737,7 @@ void calibrateWithRight() {
     else {
       calibrateAngle(sensorRF, 4, sensorRR, 5, 19);
       calibrateAutoChecked = true;
-      loop_counter = 0;
+      step_counter = 0;
     }
   }
 }
@@ -744,19 +751,19 @@ void calibrateWithFront() {
     calibrateAngle(sensorFL, 1, sensorFR, 3, 17);
     calibrateDistance(sensorFL, 1);
     calibrateAutoChecked = true;
-    loop_counter = 0;
+    step_counter = 0;
   }
   else if ((abs(distL - distC) < 5) && ((distL + distC) <= (3 * WALL_GAP))) {
     calibrateAngle(sensorFL, 1, sensorFC, 2, 9);
     calibrateDistance(sensorFC, 2);
     calibrateAutoChecked = true;
-    loop_counter = 0;
+    step_counter = 0;
   }
   else if ((abs(distC - distR) < 5) && ((distC + distR) <= (3 * WALL_GAP))) {
     calibrateAngle(sensorFC, 2, sensorFR, 3, 9);
     calibrateDistance(sensorFC, 2);
     calibrateAutoChecked = true;
-    loop_counter = 0;
+    step_counter = 0;
   }
 }
  
