@@ -159,16 +159,16 @@ void loop() {
       calibrateWithFront();
       // step_counter++;  
       break;
-    case 'Y': case 'y': // calibrate to front wall (sensor 1, 2)
-      mode = 1;
-//      calibrateWithFront(1);
-      // step_counter++;  
-      break;
-    case 'Z': case 'z': // calibrate to front wall (sensor 2, 3)
-      mode = 1;
-//      calibrateWithFront(2);
-      // step_counter++;  
-      break;
+//    case 'Y': case 'y': // calibrate to front wall (sensor 1, 2)
+//      mode = 1;
+////      calibrateWithFront(1);
+//      // step_counter++;  
+//      break;
+//    case 'Z': case 'z': // calibrate to front wall (sensor 2, 3)
+//      mode = 1;
+////      calibrateWithFront(2);
+//      // step_counter++;  
+//      break;
     default: 
       flag = false;
       Serial.println("E");
@@ -400,6 +400,8 @@ void readSensors() {
   int calibrate_front = 0;
   int calibrate_right = 0;
 
+  int i;
+
   mode = 1;
 
   // check for best opportunity to calibrate
@@ -472,7 +474,7 @@ void readSensors() {
           case 1: calibrateAngle(sensorFL, 1, sensorFR, 3, 17); break;
           case 2: calibrateAngle(sensorFL, 1, sensorFC, 2, 9); break;
           case 3: calibrateAngle(sensorFC, 2, sensorFR, 3, 9); break;
-          default:
+          default: break;
         }
 
         // update the sensor values if calibrated
@@ -522,14 +524,15 @@ void readSensors() {
             calibrateDistance(sensorFC, 2);
             calibrate_front = 2;
           }
-        }
-        else {
-          distFR = calibrateSensorValue(sensorFR.distance(), 3);
-          if (distFR <= (WALL_GAP + 4)) {
-            calibrateDistance(sensorFR, 3);
-            calibrate_front = 3;
+          else {
+            distFR = calibrateSensorValue(sensorFR.distance(), 3);
+            if (distFR <= (WALL_GAP + 4)) {
+              calibrateDistance(sensorFR, 3);
+              calibrate_front = 3;
+            }
           }
         }
+        
 
         // update the sensor values if calibrated
         if (calibrate_front > 0) {
