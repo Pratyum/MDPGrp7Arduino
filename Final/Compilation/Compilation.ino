@@ -28,7 +28,7 @@
 #define WALL_GAP 10
 
 #define SPEED_MOVE 250
-#define SPEED_SPIN 250
+#define SPEED_SPIN 250  
 #define SPEED_CALIBRATE 100
 #define MOTOR_MULTIPLIER 1
 
@@ -87,6 +87,7 @@ void setup() {
   PCintPort::attachInterrupt(pinEncoderL, incLeft, RISING);
   PCintPort::attachInterrupt(pinEncoderR, incRight, RISING);
   step_counter = 0;
+  step_best_calibrate = 0;
   calibrateAutoChecked = true;
 }
 
@@ -103,9 +104,14 @@ void loop() {
   while (1){
     if (Serial.available()) {
       ch = Serial.read();
+      
+      if ((ch == 'a') || (ch == 'A')) {
+        continue;
+      }
+      
       commandBuffer[i] = ch;
       i++;
-      
+
       if (ch == '|'){
         digitalWrite(pinGreenLED, LOW);
         digitalWrite(pinRedLED, HIGH);
@@ -431,6 +437,8 @@ void readSensors() {
 
   mode = 1;
 
+
+  // check for best opportunity to calibrate
   if (step_best_calibrate >= STEPS_TO_BEST_CALIBRATE) {
     if (((abs(distFL - distFR) < 5) && ((distFL + distFR) <= (3 * WALL_GAP))) || ((abs(distFL - distFC) < 5) && ((distFL + distFC) <= (3 * WALL_GAP))) || ((abs(distFC - distFR) < 5) && ((distFC + distFR) <= (3 * WALL_GAP)))) {
       if ((distRF <= (WALL_GAP + 4)) || (distRR <= (WALL_GAP + 4))) {
@@ -445,8 +453,6 @@ void readSensors() {
       }
     }
   }
-  // check for best opportunity to calibrate
-
 
   // calibrate if above steps count
   if (step_counter >= STEPS_TO_CALIBRATE) {
