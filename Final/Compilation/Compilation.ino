@@ -29,7 +29,7 @@
 
 #define SPEED_MOVE 250
 #define SPEED_SPIN 250  
-#define SPEED_CALIBRATE 100
+#define SPEED_CALIBRATE 75
 #define MOTOR_MULTIPLIER 1
 
 #define TICKS_PER_CM 27.2
@@ -611,7 +611,7 @@ int obstaclePosition(double val, int shortrange){
   }
   else {
     tmp = (val - 6) / 10;
-    if ((tmp >= 1) && (tmp <= 3)) {
+    if ((tmp >= 1) && (tmp <= 4)) {
       return tmp;
     }
     else {
@@ -842,7 +842,7 @@ void autoCalibrate(int force_calibrate) {
         calibrateAngle(sensorRF, 4, sensorRR, 5, 9);
       }
     }
-    else if (distL <= ((WALL_GAP * 2) - 3)) {
+    else if (distL <= ((WALL_GAP * 2) - 2)) {
       step_counter = STEPS_TO_CALIBRATE;
 
       rotateLeft(90);
