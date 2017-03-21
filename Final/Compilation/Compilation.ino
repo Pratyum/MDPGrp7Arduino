@@ -32,7 +32,16 @@
 #define SPEED_CALIBRATE 75
 #define MOTOR_MULTIPLIER 1
 
+// ********** change values here! **********
 #define TICKS_PER_CM 27.2
+#define TICKS_ROTATE_RIGHT 4.20
+#define TICKS_ROTATE_LEFT 4.25
+
+#define RANGE_OF_LEFT_SENSOR 5
+#define RANGE_OF_FRONT_SENSOR 2
+#define RANGE_OF_RIGHT_SENSOR 3
+// ********** end of values to change! **********
+
 #define TICKS_TO_RAMP 100
 
 #define STEPS_TO_CALIBRATE 5
@@ -55,13 +64,13 @@ SharpIR sensorRR(pinSensorRR, MODEL_SHORT);
  * arrMapping0 is for long-range
  * long-range (start from 20); short-range (start from 10)
  */
-// values on 20 mar
-double arrMapping0[] = {18.74, 23.90, 32.29, 41.45, 51.97, 62.77, 72.41, 89.02, 131.06};
-double arrMapping1[] = {10.35, 21.17, 33.96, 52.78, 71.14};
-double arrMapping2[] = {10.00, 20.79, 32.39, 44.60, 51};
-double arrMapping3[] = {10.51, 23.12, 37.87, 54.46, 64.60};
-double arrMapping4[] = {9.88, 20.89, 32.25, 46.59, 62.69};
-double arrMapping5[] = {9.66, 20.89, 33.25, 45, 61.24};
+// values on 21 mar
+double arrMapping0[] = {18.91, 24.14, 32.29, 42.15, 52.99, 64.23, 72.41, 89.02, 131.06};
+double arrMapping1[] = {10.06, 20.69, 34.91, 69.02, 71.14};
+double arrMapping2[] = {10.18, 20.31, 30.74, 40.64, 51};
+double arrMapping3[] = {10.65, 23.24, 38.47, 55.04, 64.60};
+double arrMapping4[] = {9.71, 20.50, 32.39, 44.60, 62.69};
+double arrMapping5[] = {9.52, 20.50, 31.73, 42.76, 61.24};
 
 /**
  * ============================== Initiate global variables ==============================
@@ -124,14 +133,14 @@ void loop() {
         continue;
       }
 
-      if ((ch == 'z') || (ch == 'Z') || (ch == 'x') || (ch == 'X') || (ch == 'c') || (ch == 'C') || (ch == 'e') || (ch == 'E')) {
+      if ((ch == 'z') || (ch == 'Z') || (ch == 'c') || (ch == 'C') || (ch == 'e') || (ch == 'E')) {
         switch(ch) {
           case 'z': case 'Z':
             opportunity_calibrate_left = true;
             break;
-          case 'x': case 'X':
-            opportunity_calibrate_front = true;
-            break;
+          // case 'x': case 'X':
+          //   opportunity_calibrate_front = true;
+          //   break;
           case 'c': case 'C':
             opportunity_calibrate_right = true;
             break;
@@ -387,7 +396,7 @@ void rotateRight(double deg) {
   encoderCountLeft = encoderCountRight = prevTick = 0;
   double SPEED_RAMP = 0;
 
-  if (deg <= 90) targetTick = deg * 4.15; //4.523 4.375
+  if (deg <= 90) targetTick = deg * TICKS_ROTATE_RIGHT; //4.523 4.375
   else if (deg <= 180 ) targetTick = deg * 4.62;
   else if (deg <= 360 ) targetTick = deg * 4.675;
   else targetTick = deg * 4.65;
@@ -426,7 +435,7 @@ void rotateLeft(double deg) {
   encoderCountLeft = encoderCountRight = prevTick = 0;
   double SPEED_RAMP = 0;
 
-  if (deg <= 90) targetTick = deg * 4.22; //4.424;
+  if (deg <= 90) targetTick = deg * TICKS_ROTATE_LEFT; //4.424;
   else if (deg <= 180 ) targetTick = deg * 4.51;
   else if (deg <= 360 ) targetTick = deg * 4.51;
   else targetTick = deg * 4.65;
@@ -606,6 +615,13 @@ double calibrateSensorValue(double dist, int n){
 }
 
 int obstaclePosition(double val, int shortrange){
+  /*
+    values for shortrange
+    0 = left side
+    1 = front 
+    2 = right side
+  */
+
   int tmp = 0;
 
   int modulo = ((int) (val + 0.5)) % 10;
@@ -615,7 +631,7 @@ int obstaclePosition(double val, int shortrange){
   }
   else if (shortrange == 1) {
     tmp = (val + 4) / 10;
-    if ((tmp >= 1) && (tmp <= 2)) {
+    if ((tmp >= 1) && (tmp <= RANGE_OF_FRONT_SENSOR)) {
       return tmp;
     }
     else {
@@ -624,7 +640,7 @@ int obstaclePosition(double val, int shortrange){
   }
   else if (shortrange == 2) {
     tmp = (val + 4) / 10;
-    if ((tmp >= 1) && (tmp <= 3)) {
+    if ((tmp >= 1) && (tmp <= RANGE_OF_RIGHT_SENSOR)) {
       return tmp;
     }
     else {
@@ -633,7 +649,7 @@ int obstaclePosition(double val, int shortrange){
   }
   else {
     tmp = (val - 6) / 10;
-    if ((tmp >= 1) && (tmp <= 5)) {
+    if ((tmp >= 1) && (tmp <= RANGE_OF_LEFT_SENSOR)) {
       return tmp;
     }
     else {
