@@ -35,11 +35,10 @@
 #define TICKS_PER_CM 27.2
 #define TICKS_TO_RAMP 100
 
-
 #define STEPS_TO_CALIBRATE 5
 #define STEPS_TO_BEST_CALIBRATE 3
 
-#define DELAY_PER_MOVE 90
+#define DELAY_PER_MOVE 50
 
 DualVNH5019MotorShield md;
 
@@ -56,13 +55,13 @@ SharpIR sensorRR(pinSensorRR, MODEL_SHORT);
  * arrMapping0 is for long-range
  * long-range (start from 20); short-range (start from 10)
  */
-// values on 17 mar part 2
-double arrMapping0[] = {18.63, 23.71, 31.86, 41.45, 50.80, 64.23, 72.41, 89.02, 131.06};
-double arrMapping1[] = {10.16, 21.17, 34.91, 55.04, 71.14};
-double arrMapping2[] = {9.82, 20.50, 32.61, 44.60, 51};
-double arrMapping3[] = {10.54, 23.36, 38.32, 55.04, 64.60};
-double arrMapping4[] = {10.25, 21.33, 33.25, 46.59, 62.69};
-double arrMapping5[] = {9.86, 20.99, 33.25, 45.41, 61.24};
+// values on 20 mar
+double arrMapping0[] = {18.74, 23.90, 32.29, 41.45, 51.97, 62.77, 72.41, 89.02, 131.06};
+double arrMapping1[] = {10.35, 21.17, 33.96, 52.78, 71.14};
+double arrMapping2[] = {10.00, 20.79, 32.39, 44.60, 51};
+double arrMapping3[] = {10.51, 23.12, 37.87, 54.46, 64.60};
+double arrMapping4[] = {9.88, 20.89, 32.25, 46.59, 62.69};
+double arrMapping5[] = {9.66, 20.89, 33.25, 45, 61.24};
 
 /**
  * ============================== Initiate global variables ==============================
@@ -108,6 +107,7 @@ void loop() {
   char commandBuffer[50];
   char command, ch;
   bool flag = true;
+  int emergency = 0;
 
   forward_command = false;
   sensor_command = false;
@@ -124,7 +124,7 @@ void loop() {
         continue;
       }
 
-      if ((ch == 'z') || (ch == 'Z') || (ch == 'x') || (ch == 'X') || (ch == 'c') || (ch == 'C')) {
+      if ((ch == 'z') || (ch == 'Z') || (ch == 'x') || (ch == 'X') || (ch == 'c') || (ch == 'C') || (ch == 'e') || (ch == 'E')) {
         switch(ch) {
           case 'z': case 'Z':
             opportunity_calibrate_left = true;
@@ -135,7 +135,11 @@ void loop() {
           case 'c': case 'C':
             opportunity_calibrate_right = true;
             break;
+          case 'e': case 'E':
+            emergency = 1;
+            break;
         }
+        delay(10);
         ch = Serial.read();
         continue;
       }
@@ -196,7 +200,7 @@ void loop() {
     case 'S': case 's': // readSensors
       flag = false;
       sensor_command = true;
-      autoCalibrate(0);
+      autoCalibrate(1);
       readSensors();
       break;
     case 'C': case 'c': // calibrate to right wall
@@ -211,9 +215,9 @@ void loop() {
       flag = false; 
       step_counter = (calibrateWithLeft()) ? 0 : step_counter;
       break;
-    case 'E': case 'e':
-      flag = false;
-      (autoCalibrate(1));
+    // case 'E': case 'e':
+    //   flag = false;
+    //   (autoCalibrate(1));
       break;
     default: 
       flag = false;
@@ -222,9 +226,10 @@ void loop() {
   
   if (flag) {
     // check if command was action, calibrate if yes
-    autoCalibrate(0);
+    autoCalibrate(emergency);
   }
 
+  delay(10);
   if (!Serial.available()) {
     if (flag) {
       // TODO: read sensors values and store it so that we dont need to read again for calibration
@@ -319,6 +324,9 @@ void forward(double cm) {
       md.setSpeeds((SPEED_MOVE * MOTOR_MULTIPLIER) - pid, SPEED_MOVE + pid);
     }
     while (encoderCountLeft < targetTick) {
+      // if ((calibrateSensorValue(sensorFL.distance(), 1) <= WALL_GAP) || (calibrateSensorValue(sensorFC.distance(), 2) <= WALL_GAP) || (calibrateSensorValue(sensorFR.distance(), 3) <= WALL_GAP)) {
+      //   break;
+      // }
       SPEED_RAMP = modifiedMap(encoderCountLeft, targetTick - TICKS_TO_RAMP, targetTick, SPEED_MOVE, 50);
       pid = computePID();
       md.setSpeeds((SPEED_RAMP * MOTOR_MULTIPLIER) - pid, (SPEED_RAMP) + pid);
@@ -379,7 +387,7 @@ void rotateRight(double deg) {
   encoderCountLeft = encoderCountRight = prevTick = 0;
   double SPEED_RAMP = 0;
 
-  if (deg <= 90) targetTick = deg * 4.24; //4.523 4.375
+  if (deg <= 90) targetTick = deg * 4.15; //4.523 4.375
   else if (deg <= 180 ) targetTick = deg * 4.62;
   else if (deg <= 360 ) targetTick = deg * 4.675;
   else targetTick = deg * 4.65;
@@ -418,7 +426,7 @@ void rotateLeft(double deg) {
   encoderCountLeft = encoderCountRight = prevTick = 0;
   double SPEED_RAMP = 0;
 
-  if (deg <= 90) targetTick = deg * 4.27; //4.424;
+  if (deg <= 90) targetTick = deg * 4.22; //4.424;
   else if (deg <= 180 ) targetTick = deg * 4.51;
   else if (deg <= 360 ) targetTick = deg * 4.51;
   else targetTick = deg * 4.65;
@@ -468,8 +476,8 @@ void readSensors() {
   int posFL = obstaclePosition(distFL, 1);
   int posFC = obstaclePosition(distFC, 1);
   int posFR = obstaclePosition(distFR, 1);
-  int posRF = obstaclePosition(distRF, 1);
-  int posRR = obstaclePosition(distRR, 1);
+  int posRF = obstaclePosition(distRF, 2);
+  int posRR = obstaclePosition(distRR, 2);
   int posL = obstaclePosition(distL, 0);
 
   // check for any values that are not satisfied
@@ -507,7 +515,7 @@ void readSensors() {
       break;
     }
     else {
-      posRF = obstaclePosition(calibrateSensorValue(sensorRF.distance(), 4), 1);
+      posRF = obstaclePosition(calibrateSensorValue(sensorRF.distance(), 4), 2);
     }
   }
 
@@ -517,7 +525,7 @@ void readSensors() {
       break;
     }
     else {
-      posRR = obstaclePosition(calibrateSensorValue(sensorRR.distance(), 5), 1);
+      posRR = obstaclePosition(calibrateSensorValue(sensorRR.distance(), 5), 2);
     }
   }
 
@@ -586,9 +594,14 @@ double calibrateSensorValue(double dist, int n){
       int a = (i == 0)? 0 : arr[i-1];
       int offset = (n == 0)? 1 : 0;
 
+      if ((i == 0) && (n == 0)) {
+        return modifiedMap(dist, a, arr[i], 0, ((i + offset + 1) * 10));
+      }
+
       return modifiedMap(dist, a, arr[i], ((i + offset) * 10), ((i + offset + 1) * 10));
     }
   }
+  
   return i*10;
 }
 
@@ -609,13 +622,22 @@ int obstaclePosition(double val, int shortrange){
       return 0; 
     }    
   }
-  else {
-    tmp = (val - 6) / 10;
-    if ((tmp >= 1) && (tmp <= 4)) {
+  else if (shortrange == 2) {
+    tmp = (val + 4) / 10;
+    if ((tmp >= 1) && (tmp <= 3)) {
       return tmp;
     }
     else {
       return 0; 
+    }    
+  }
+  else {
+    tmp = (val - 6) / 10;
+    if ((tmp >= 1) && (tmp <= 5)) {
+      return tmp;
+    }
+    else {
+      return 0;
     }
   }
 }
@@ -647,12 +669,12 @@ void autoCalibrate(int force_calibrate) {
   int calibrate_right = 0;
 
   if (force_calibrate == 0) {
-    to_calibrate = ((distFL <= WALL_GAP + 4) && ((distFL <= (WALL_GAP - 3)) || (distFL >= (WALL_GAP + 3)))) ? true : false;
-    to_calibrate = ((distFC <= WALL_GAP + 4) && ((distFC <= (WALL_GAP - 3)) || (distFC >= (WALL_GAP + 3)))) ? true : false;
-    to_calibrate = ((distFR <= WALL_GAP + 4) && ((distFR <= (WALL_GAP - 3)) || (distFR >= (WALL_GAP + 3)))) ? true : false;
-    to_calibrate = ((distRF <= WALL_GAP + 4) && ((distRF <= (WALL_GAP - 3)) || (distRF >= (WALL_GAP + 3)))) ? true : false;
-    to_calibrate = ((distRR <= WALL_GAP + 4) && ((distRR <= (WALL_GAP - 3)) || (distRR >= (WALL_GAP + 3)))) ? true : false;
-    to_calibrate = ((distL <= (2 * WALL_GAP) + 4) && ((distL <= ((2 * WALL_GAP) - 3)) || (distL >= ((2 * WALL_GAP) + 3)))) ? true : false;
+    to_calibrate = ((distFL <= WALL_GAP + 4) && ((distFL <= (WALL_GAP - 2)) || (distFL >= (WALL_GAP + 2)))) ? true : false;
+    to_calibrate = ((distFC <= WALL_GAP + 4) && ((distFC <= (WALL_GAP - 2)) || (distFC >= (WALL_GAP + 2)))) ? true : false;
+    to_calibrate = ((distFR <= WALL_GAP + 4) && ((distFR <= (WALL_GAP - 2)) || (distFR >= (WALL_GAP + 2)))) ? true : false;
+    to_calibrate = ((distRF <= WALL_GAP + 4) && ((distRF <= (WALL_GAP - 2)) || (distRF >= (WALL_GAP + 2)))) ? true : false;
+    to_calibrate = ((distRR <= WALL_GAP + 4) && ((distRR <= (WALL_GAP - 2)) || (distRR >= (WALL_GAP + 2)))) ? true : false;
+    to_calibrate = ((distL <= (2 * WALL_GAP) + 4) && ((distL <= ((2 * WALL_GAP) - 2)) || (distL >= ((2 * WALL_GAP) + 2)))) ? true : false;
     force_calibrate++;
   }
   else if ((force_calibrate == 1) || (force_calibrate == 2)) {
@@ -762,7 +784,7 @@ void autoCalibrate(int force_calibrate) {
       }
 
       if ((abs(distRF - distRR) < 5) && ((distRF + distRR) <= (3 * WALL_GAP))) {
-        if (((distRF + distRR) < ((2 * WALL_GAP) - 6)) || ((distRF + distRR) > ((2 * WALL_GAP) + 6))) {
+        if (((distRF + distRR) < ((2 * WALL_GAP) - 4)) || ((distRF + distRR) > ((2 * WALL_GAP) + 4))) {
           // calibrate to right
           rotateRight(90);
           calibrateWithFront();
@@ -808,7 +830,7 @@ void autoCalibrate(int force_calibrate) {
         autoCalibrate(force_calibrate);
         rotateRight(90);
       }
-      else if (distL <= ((WALL_GAP * 2) - 3)) {
+      else if (distL <= ((WALL_GAP * 2) + 4)) {
         if (obstacle_left_center || obstacle_left_rear) {
           step_counter = 0;
 
@@ -831,22 +853,66 @@ void autoCalibrate(int force_calibrate) {
       rotateRight(90);
     }
   }
-  else {
-    if ((abs(distRF - distRR) < 5) && ((distRF + distRR) <= (3 * WALL_GAP))) {
+  else if ((abs(distRF - distRR) < 5) && ((distRF + distRR) <= (3 * WALL_GAP))) {
+    calibrateAngle(sensorRF, 4, sensorRR, 5, 9);
+    
+    if (((distRF + distRR) < ((2 * WALL_GAP) - 4)) || ((distRF + distRR) > ((2 * WALL_GAP) + 4))) {
+      rotateRight(90);
+      calibrateDistance(sensorFL, 1);
+      rotateLeft(90);
       calibrateAngle(sensorRF, 4, sensorRR, 5, 9);
-      
-      if (((distRF + distRR) < ((2 * WALL_GAP) - 6)) || ((distRF + distRR) > ((2 * WALL_GAP) + 6))) {
-        rotateRight(90);
-        calibrateDistance(sensorFL, 1);
-        rotateLeft(90);
-        calibrateAngle(sensorRF, 4, sensorRR, 5, 9);
-      }
     }
-    else if (distL <= ((WALL_GAP * 2) - 2)) {
+  }
+  else if (distL <= ((WALL_GAP * 2) + 4)) {
+    if ((distL <= ((WALL_GAP * 2) - 2)) || (distL >= ((WALL_GAP * 2) + 2))) {
       step_counter = STEPS_TO_CALIBRATE;
 
       rotateLeft(90);
       autoCalibrate(force_calibrate);
+      rotateRight(90);
+    }
+  }
+  else {
+    // if too close to one obstacle (calibrate to that one obstacle)
+    if (distFL <= WALL_GAP - 2) {
+      if (!calibrateWithFront()) {
+        calibrateDistance(sensorFL, 1);
+      }
+    }
+
+    if (distFC <= WALL_GAP - 2) {
+      if (!calibrateWithFront()) {
+        calibrateDistance(sensorFC, 2);
+      }
+    }
+
+    if (distFR <= WALL_GAP - 2) {
+      if (!calibrateWithFront()) {
+        calibrateDistance(sensorFR, 3);
+      }
+    }
+
+    if (distRF <= WALL_GAP - 2) {
+      rotateRight(90);
+      if (!calibrateWithFront()) {
+        calibrateDistance(sensorFL, 1);
+      }
+      rotateLeft(90);
+    }
+
+    if (distRR <= WALL_GAP - 2) {
+      rotateRight(90);
+      if (!calibrateWithFront()) {
+        calibrateDistance(sensorFC, 2);
+      }
+      rotateLeft(90);
+    }
+
+    if (distL <= ((WALL_GAP * 2) - 2)) {
+      rotateLeft(90);
+      if (!calibrateWithFront()) {
+        calibrateDistance(sensorFR, 3);
+      }
       rotateRight(90);
     }
   }
@@ -975,7 +1041,7 @@ void calibrateAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int di
     else if (distR > distL){   
       rotateLeft(angle);
     }
-    
+    delay(10);
     distL = calibrateSensorValue(sensorL.distance(), arrL);
     distR = calibrateSensorValue(sensorR.distance(), arrR);
     diff = abs(distL - distR);
