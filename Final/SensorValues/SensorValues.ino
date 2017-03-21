@@ -129,12 +129,20 @@ SharpIR sensor5(pinSensor5, MODEL_SHORT);
 //double arrMapping5[] = {9.86, 20.99, 33.25, 45.41, 61.24};
 
 // values on 20 mar
-double arrMapping0[] = {18.74, 23.90, 32.29, 41.45, 51.97, 62.77, 72.41, 89.02, 131.06};
-double arrMapping1[] = {10.35, 21.17, 33.96, 52.78, 71.14};
-double arrMapping2[] = {10.00, 20.79, 32.39, 44.60, 51};
-double arrMapping3[] = {10.51, 23.12, 37.87, 54.46, 64.60};
-double arrMapping4[] = {10.06, 20.89, 32.25, 46.59, 62.69};
-double arrMapping5[] = {9.75, 20.89, 33.25, 45, 61.24};
+//double arrMapping0[] = {18.74, 23.90, 32.29, 41.45, 51.97, 62.77, 72.41, 89.02, 131.06};
+//double arrMapping1[] = {10.35, 21.17, 33.96, 52.78, 71.14};
+//double arrMapping2[] = {10.00, 20.79, 32.39, 44.60, 51};
+//double arrMapping3[] = {10.51, 23.12, 37.87, 54.46, 64.60};
+//double arrMapping4[] = {9.88, 20.89, 32.25, 46.59, 62.69};
+//double arrMapping5[] = {9.66, 20.89, 33.25, 45, 61.24};
+
+// values on 21 mar
+double arrMapping0[] = {18.91, 24.14, 32.29, 42.15, 52.99, 64.23, 72.41, 89.02, 131.06};
+double arrMapping1[] = {10.06, 20.69, 34.91, 69.02, 71.14};
+double arrMapping2[] = {10.18, 20.31, 30.74, 40.64, 51};
+double arrMapping3[] = {10.65, 23.24, 38.47, 55.04, 64.60};
+double arrMapping4[] = {9.71, 20.50, 32.39, 44.60, 62.69};
+double arrMapping5[] = {9.52, 20.50, 31.73, 42.76, 61.24};
 
 void setup() {
   Serial.begin(9600);
