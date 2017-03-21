@@ -184,7 +184,26 @@ void loop() {
       }
       break;
     case 'F': case 'f': // forward
-      (val == 0) ? forward(10) : forward(val * 10);
+      // (val == 0) ? forward(10) : forward(val * 10);
+      if (val == 0){
+        forward(10);
+      }
+      else if (val > 5){
+        while(val > 5){
+          forward(50);
+          step_counter++;
+          step_best_calibrate++;
+          autoCalibrate(emergency);
+          val -= 5;
+        }
+        if (val > 0 ){
+          forward(val * 10); 
+        }
+      }
+      else {
+        forward(val * 10);
+      }
+
       if ((val == 0) || (val == 1)) {
         forward_command = true;
       }
