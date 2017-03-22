@@ -33,15 +33,15 @@
 #define MOTOR_MULTIPLIER 1
 
 // ********** change values here! **********
-#define TICKS_PER_CM 27.2
-#define TICKS_ROTATE_RIGHT 4.20
-#define TICKS_ROTATE_LEFT 4.25
+#define TICKS_PER_CM 27.4
+#define TICKS_ROTATE_RIGHT 4.25
+#define TICKS_ROTATE_LEFT 4.27
 
 #define RANGE_OF_LEFT_SENSOR 5
 #define RANGE_OF_FRONT_SENSOR 2
 #define RANGE_OF_RIGHT_SENSOR 3
 
-#define KP 18 // 18
+#define KP 18 // 18 - smaller righter, bigger lefter
 #define KI 0.005 // 0.005
 #define KD 0.025 // 0.025
 // ********** end of values to change! **********
@@ -68,13 +68,13 @@ SharpIR sensorRR(pinSensorRR, MODEL_SHORT);
  * arrMapping0 is for long-range
  * long-range (start from 20); short-range (start from 10)
  */
-// values on 21 mar
-double arrMapping0[] = {18.91, 24.14, 32.29, 42.15, 52.99, 64.23, 72.41, 89.02, 131.06};
-double arrMapping1[] = {10.06, 20.69, 34.91, 69.02, 71.14};
-double arrMapping2[] = {10.18, 20.31, 30.74, 40.64, 51};
-double arrMapping3[] = {10.65, 23.24, 38.47, 55.04, 64.60};
-double arrMapping4[] = {9.71, 20.50, 32.39, 44.60, 62.69};
-double arrMapping5[] = {9.52, 20.50, 31.73, 42.76, 61.24};
+// values on 22 mar
+double arrMapping0[] = {18.87, 23.96, 32.08, 42.15, 53.27, 64.63, 75.36, 89.02, 131.06};
+double arrMapping1[] = {10.45, 21.17, 33.02, 48.84, 71.14};
+double arrMapping2[] = {10.18, 20.89, 32.39, 44.60, 51};
+double arrMapping3[] = {10.97, 23.24, 38.47, 57.35, 64.60};
+double arrMapping4[] = {10.16, 20.89, 32.39, 45.00, 62.69};
+double arrMapping5[] = {9.86, 20.89, 31.73, 42.39, 61.24};
 
 /**
  * ============================== Initiate global variables ==============================
@@ -320,38 +320,20 @@ void forward(double cm) {
   targetTick = ((cm * 1.1)-1) * TICKS_PER_CM; // Caliberated to 30.25 ticks per cm
 
   if (!mode_calibration) {
-    // check if forward is valid
-//    double distFL = calibrateSensorValue(sensorFL.distance(), 1);
-//    double distFC = calibrateSensorValue(sensorFC.distance(), 2);
-//    double distFR = calibrateSensorValue(sensorFR.distance(), 3);
-//  
-//    if (distFL <= 14) {
-//      mode = 1;
-//      calibrateDistance(sensorFL, 1);
-//      mode = 0;
-//      return false;
-//    }
-//    else if (distFC <= 14) {
-//      mode = 1;
-//      calibrateDistance(sensorFC, 2);
-//      mode = 0;
-//      return false;
-//    }
-//    else if (distFR <= 14) {
-//      mode = 1;
-//      calibrateDistance(sensorFR, 3);
-//      mode = 0;
-//      return false;
-//    }
-
     while (encoderCountLeft < min(TICKS_TO_RAMP, targetTick)) {
       SPEED_RAMP = modifiedMap(encoderCountLeft, 0, TICKS_TO_RAMP, 50, SPEED_MOVE);
       pid = computePID();
-      md.setSpeeds((SPEED_RAMP * MOTOR_MULTIPLIER) - pid, (SPEED_RAMP) + pid);
+      md.setSpeeds((SPEED_RAMP * MOTOR_MULTIPLIER) - pid, SPEED_RAMP + pid);
+//      Serial.print((SPEED_RAMP * MOTOR_MULTIPLIER));
+//      Serial.print("\t");
+//      Serial.println((SPEED_RAMP) + pid);
     }
     while (encoderCountLeft < targetTick  - TICKS_TO_RAMP) {
       pid = computePID();
       md.setSpeeds((SPEED_MOVE * MOTOR_MULTIPLIER) - pid, SPEED_MOVE + pid);
+//      Serial.print((SPEED_MOVE * MOTOR_MULTIPLIER));
+//      Serial.print("\t");
+//      Serial.println((SPEED_MOVE) + pid);
     }
     while (encoderCountLeft < targetTick) {
       // if ((calibrateSensorValue(sensorFL.distance(), 1) <= WALL_GAP) || (calibrateSensorValue(sensorFC.distance(), 2) <= WALL_GAP) || (calibrateSensorValue(sensorFR.distance(), 3) <= WALL_GAP)) {
@@ -359,7 +341,10 @@ void forward(double cm) {
       // }
       SPEED_RAMP = modifiedMap(encoderCountLeft, targetTick - TICKS_TO_RAMP, targetTick, SPEED_MOVE, 50);
       pid = computePID();
-      md.setSpeeds((SPEED_RAMP * MOTOR_MULTIPLIER) - pid, (SPEED_RAMP) + pid);
+      md.setSpeeds((SPEED_RAMP * MOTOR_MULTIPLIER) - pid, SPEED_RAMP + pid);
+//      Serial.print((SPEED_RAMP * MOTOR_MULTIPLIER));
+//      Serial.print("\t");
+//      Serial.println((SPEED_RAMP) + pid);
     }
   }
   else {
@@ -381,13 +366,13 @@ void reverse(double cm) {
   encoderCountLeft = encoderCountRight = prevTick = 0;
   double SPEED_RAMP = 0;
 
-  targetTick = ((cm * 1.07)-0.7) * TICKS_PER_CM; // Caliberated to 30.25 ticks per cm
+  targetTick = ((cm * 1.1)-1) * TICKS_PER_CM; // Caliberated to 30.25 ticks per cm
 
   if (!mode_calibration) {
     while (encoderCountLeft < min(TICKS_TO_RAMP, targetTick)) {
       SPEED_RAMP = modifiedMap(encoderCountLeft, 0, TICKS_TO_RAMP, 50, SPEED_MOVE);
       pid = computePID();
-      md.setSpeeds(-((SPEED_RAMP * MOTOR_MULTIPLIER) - pid), -((SPEED_RAMP) + pid));
+      md.setSpeeds(-((SPEED_RAMP * MOTOR_MULTIPLIER) - pid), -(SPEED_RAMP + pid));
     }
     while (encoderCountLeft < targetTick - TICKS_TO_RAMP) {
       pid = computePID();
@@ -396,7 +381,7 @@ void reverse(double cm) {
     while (encoderCountLeft < targetTick) {
       SPEED_RAMP = modifiedMap(encoderCountLeft, targetTick - TICKS_TO_RAMP, targetTick, SPEED_MOVE, 50);
       pid = computePID();
-      md.setSpeeds(-((SPEED_RAMP * MOTOR_MULTIPLIER) - pid), -((SPEED_RAMP) + pid));
+      md.setSpeeds(-((SPEED_RAMP * MOTOR_MULTIPLIER) - pid), -(SPEED_RAMP + pid));
     }
   }
   else {
@@ -426,7 +411,7 @@ void rotateRight(double deg) {
     while (encoderCountLeft < min(TICKS_TO_RAMP, targetTick)) {
       SPEED_RAMP = modifiedMap(encoderCountLeft, 0, TICKS_TO_RAMP, 50, SPEED_SPIN);
       pid = computePID();
-      md.setSpeeds((SPEED_RAMP * MOTOR_MULTIPLIER) - pid, -((SPEED_RAMP) + pid));
+      md.setSpeeds((SPEED_RAMP * MOTOR_MULTIPLIER) - pid, -(SPEED_RAMP + pid));
     }
     while (encoderCountLeft < targetTick - TICKS_TO_RAMP) {
       pid = computePID();
@@ -435,7 +420,7 @@ void rotateRight(double deg) {
     while (encoderCountLeft < targetTick) {
       SPEED_RAMP = modifiedMap(encoderCountLeft, targetTick - TICKS_TO_RAMP, targetTick, SPEED_SPIN, 50);
       pid = computePID();
-      md.setSpeeds((SPEED_RAMP * MOTOR_MULTIPLIER) - pid, -((SPEED_RAMP) + pid));
+      md.setSpeeds((SPEED_RAMP * MOTOR_MULTIPLIER) - pid, -(SPEED_RAMP + pid));
     }
   }
   else {
@@ -465,7 +450,7 @@ void rotateLeft(double deg) {
     while (encoderCountLeft < min(TICKS_TO_RAMP, targetTick)) {
       SPEED_RAMP = modifiedMap(encoderCountLeft, 0, TICKS_TO_RAMP, 50, SPEED_SPIN);
       pid = computePID();
-      md.setSpeeds(-((SPEED_RAMP * MOTOR_MULTIPLIER) - pid), ((SPEED_RAMP) + pid));
+      md.setSpeeds(-((SPEED_RAMP * MOTOR_MULTIPLIER) - pid), (SPEED_RAMP + pid));
     }
     while (encoderCountLeft < targetTick - TICKS_TO_RAMP) {
       pid = computePID();
@@ -474,7 +459,7 @@ void rotateLeft(double deg) {
     while (encoderCountLeft < targetTick) {
       SPEED_RAMP = modifiedMap(encoderCountLeft, targetTick - TICKS_TO_RAMP, targetTick, SPEED_SPIN, 50);
       pid = computePID();
-      md.setSpeeds(-((SPEED_RAMP * MOTOR_MULTIPLIER) - pid), ((SPEED_RAMP) + pid));
+      md.setSpeeds(-((SPEED_RAMP * MOTOR_MULTIPLIER) - pid), (SPEED_RAMP + pid));
     }
   }
   else {
