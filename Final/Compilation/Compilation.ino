@@ -33,17 +33,18 @@
 #define MOTOR_MULTIPLIER 1
 
 // ********** change values here! **********
-#define TICKS_PER_CM 27.4
+#define TICKS_PER_CM 27.1
 #define TICKS_ROTATE_RIGHT 4.25
-#define TICKS_ROTATE_LEFT 4.27
+#define TICKS_ROTATE_LEFT 4.28
+#define STEPS_PER_EXTRA_TICK 300
 
 #define RANGE_OF_LEFT_SENSOR 5
 #define RANGE_OF_FRONT_SENSOR 2
 #define RANGE_OF_RIGHT_SENSOR 3
 
 #define KP 18 // 18 - smaller righter, bigger lefter
-#define KI 0.005 // 0.005
-#define KD 0.025 // 0.025
+#define KI 0.0001// 0.005
+#define KD 0.040 // 0.025
 // ********** end of values to change! **********
 
 #define TICKS_TO_RAMP 100
@@ -68,13 +69,13 @@ SharpIR sensorRR(pinSensorRR, MODEL_SHORT);
  * arrMapping0 is for long-range
  * long-range (start from 20); short-range (start from 10)
  */
-// values on 22 mar
-double arrMapping0[] = {18.87, 23.96, 32.08, 42.15, 53.27, 64.63, 75.36, 89.02, 131.06};
+// values on 23 mar
+double arrMapping0[] = {18.74, 23.84, 31.67, 41.62, 52.23, 64.63, 75.36, 89.02, 131.06};
 double arrMapping1[] = {10.45, 21.17, 33.02, 48.84, 71.14};
-double arrMapping2[] = {10.18, 20.89, 32.39, 44.60, 51};
-double arrMapping3[] = {10.97, 23.24, 38.47, 57.35, 64.60};
-double arrMapping4[] = {10.16, 20.89, 32.39, 45.00, 62.69};
-double arrMapping5[] = {9.86, 20.89, 31.73, 42.39, 61.24};
+double arrMapping2[] = {10.24, 20.89, 31.73, 44.60, 51};
+double arrMapping3[] = {10.94, 23.24, 38.17, 55.04, 64.60};
+double arrMapping4[] = {9.88, 20.89, 33.25, 46.59, 62.69};
+double arrMapping5[] = {9.59, 20.89, 33.49, 45.41, 61.24};
 
 /**
  * ============================== Initiate global variables ==============================
@@ -188,25 +189,25 @@ void loop() {
       }
       break;
     case 'F': case 'f': // forward
-      // (val == 0) ? forward(10) : forward(val * 10);
-      if (val == 0){
-        forward(10);
-      }
-      else if (val > 5){
-        while(val > 5){
-          forward(50);
-          step_counter++;
-          step_best_calibrate++;
-          autoCalibrate(emergency);
-          val -= 5;
-        }
-        if (val > 0 ){
-          forward(val * 10); 
-        }
-      }
-      else {
-        forward(val * 10);
-      }
+       (val == 0) ? forward(10) : forward(val * 10);
+//      if (val == 0){
+//        forward(10);
+//      }
+//      else if (val >= 4){
+//        while(val >= 4){
+//          forward(40);
+//          step_counter++;
+//          step_best_calibrate++;
+//          autoCalibrate(emergency);
+//          val -= 4;
+//        }
+//        if (val > 0){
+//          forward(val * 10); 
+//        }
+//      }
+//      else {
+//        forward(val * 10);
+//      }
 
       if ((val == 0) || (val == 1)) {
         forward_command = true;
@@ -282,7 +283,7 @@ void loop() {
  * ============================== For Motors ==============================
  */
 void incLeft() {
-  encoderCountLeft++;
+  (encoderCountLeft % STEPS_PER_EXTRA_TICK == 0) ? encoderCountLeft += 2:encoderCountLeft++;
 }
 
 void incRight() {
@@ -790,7 +791,7 @@ void autoCalibrate(int force_calibrate) {
         }
       }
     }
-    else if (((abs(distRF - distRR) < 5) && ((distRF + distRR) <= (3 * WALL_GAP))) || opportunity_calibrate_right) {
+    else if (((abs(distRF - distRR) < 5) && ((distRF + distRR) <= (3 * WALL_GAP))) || opportunity_calibrate_right || (forward_command && obstacle_right_rear && ((distRF <= (WALL_GAP + 4)) || (distRR <= (WALL_GAP + 4))))) {
       // check for right wall and calibrate
       step_counter = 0;
 
@@ -844,36 +845,6 @@ void autoCalibrate(int force_calibrate) {
         }
       }
     }
-    // else if (forward_command || opportunity_calibrate_left) {
-    //   if (opportunity_calibrate_left) {
-    //     step_counter = 0;
-
-    //     rotateLeft(90);
-    //     autoCalibrate(force_calibrate);
-    //     rotateRight(90);
-    //   }
-    //   else if (distL <= ((WALL_GAP * 2) + 4)) {
-    //     if (obstacle_left_center || obstacle_left_rear) {
-    //       step_counter = 0;
-
-    //       rotateLeft(90);
-    //       autoCalibrate(force_calibrate);
-    //       rotateRight(90);
-    //     }
-    //   }
-    //   else if (obstacle_left_center && obstacle_left_rear) {
-    //     step_counter = 0;
-
-    //     rotateLeft(90);
-    //     autoCalibrate(force_calibrate);
-    //     rotateRight(90);
-    //   }
-    //   else {
-    //     rotateLeft(90);
-    //     autoCalibrate(force_calibrate);
-    //     rotateRight(90);
-    //   }
-    // }
     else {
       rotateLeft(90);
       autoCalibrate(force_calibrate);
@@ -1074,7 +1045,7 @@ void calibrateAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int di
     else if (distR > distL){   
       rotateLeft(angle);
     }
-    delay(10);
+    delay(20);
     distL = calibrateSensorValue(sensorL.distance(), arrL);
     distR = calibrateSensorValue(sensorR.distance(), arrR);
     diff = abs(distL - distR);
