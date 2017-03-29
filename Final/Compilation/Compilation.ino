@@ -183,6 +183,17 @@ void loop() {
   val = valString.toDouble();
   int start_inst_index = 0;
   switch (command) {
+    case 'Q': case 'q':
+      delay(5000);
+      rotateRight(90);
+      rotateRight(90);
+      calibrateWithFront();
+      delay(1000);
+      rotateRight(90);
+      calibrateWithFront();
+      delay(1000);
+      rotateRight(90);
+      break;
     case 'M': case 'm': // mode
       flag = false;
       if (val = 2) {
@@ -239,12 +250,6 @@ void loop() {
       (val == 0) ? rotateRight(90) : rotateRight(val);
       step_counter++;
       step_best_calibrate++;
-      break;
-    case 'j': case 'J':
-      curveLeft();
-      break;
-    case 'k': case 'K':
-      curveRight();
       break;
     case 'S': case 's': // readSensors
       flag = false;
@@ -335,102 +340,13 @@ double computePID() {
   return pid;
 }
 
-double computeCurvePID(bool isLeft) {
-//  Serial.println(String(encoderCountLeft) + ", " + String(encoderCountRight) + ", " + String(encoderCountLeft - encoderCountRight));
-  double kp, ki, kd, p, i, d, error, pid;
-  
-  kp = KP; // 10 trial and error
-  ki = KI; // 0.005
-  kd = KD; // 0.025
-  
-  if(isLeft) {
-    error = 2.50877193 * encoderCountLeft - encoderCountRight;
-  }
-  else {
-    error = encoderCountLeft - 2.50877193 * encoderCountRight;
-  }
-  
-  integral += error;
-
-  p = kp * error;
-  i = ki * integral;
-  d = kd * (prevTick - encoderCountLeft);
-  pid = p + i + d;
-
-  prevTick = encoderCountLeft;
-
-  return pid;
-}
-
-
-void curveLeft() {
-  double pid;
-  int targetTick;
-  integral = 0;
-  encoderCountLeft = encoderCountRight = prevTick = 0;
-  double SPEED_RAMP = 0;
-
-  double multiplier = 2.50877193;
-  double cm = PI * 5.7;
-//  Serial.println(cm);
-  targetTick = ((cm * 1.15)-1.5) * TICKS_PER_CM; // Caliberated to 30.25 ticks per cm
-
-  while (encoderCountLeft < min(TICKS_TO_RAMP, targetTick)) {
-    SPEED_RAMP = modifiedMap(encoderCountLeft, 0, TICKS_TO_RAMP, 50, SPEED_MOVE);
-    pid = computeCurvePID(true);
-    md.setSpeeds((SPEED_RAMP / multiplier) - pid, SPEED_RAMP + pid);
-  }
-  while (encoderCountLeft < targetTick  - TICKS_TO_RAMP) {
-    pid = computeCurvePID(true);
-    md.setSpeeds((SPEED_MOVE / multiplier) - pid, SPEED_MOVE + pid);
-  }
-  while (encoderCountLeft < targetTick) {
-    SPEED_RAMP = modifiedMap(encoderCountLeft, targetTick - TICKS_TO_RAMP, targetTick, SPEED_MOVE, 50);
-    pid = computeCurvePID(true);
-    md.setSpeeds((SPEED_RAMP / multiplier) - pid, SPEED_RAMP + pid);
-  }
-
-  md.setBrakes(400, 400);
-  delay(DELAY_PER_MOVE);
-}
-
-void curveRight() {
-  double pid;
-  int targetTick;
-  integral = 0;
-  encoderCountLeft = encoderCountRight = prevTick = 0;
-  double SPEED_RAMP = 0;
-
-  double multiplier = 2.50877193;
-  double cm = PI * 5.7;
-
-  targetTick = ((cm * 1.15)-1.5) * TICKS_PER_CM; // Caliberated to 30.25 ticks per cm
-
-  while (encoderCountRight < min(TICKS_TO_RAMP, targetTick)) {
-    SPEED_RAMP = modifiedMap(encoderCountRight, 0, TICKS_TO_RAMP, 50, SPEED_MOVE);
-    pid = computeCurvePID(false);
-    md.setSpeeds(SPEED_RAMP - pid, (SPEED_RAMP / multiplier) + pid);
-  }
-  while (encoderCountRight < targetTick ) {
-    pid = computeCurvePID(false);
-    md.setSpeeds(SPEED_MOVE - pid, (SPEED_MOVE / multiplier) + pid);
-  }
-  while (encoderCountRight < targetTick) {
-    SPEED_RAMP = modifiedMap(encoderCountRight, targetTick - TICKS_TO_RAMP, targetTick, SPEED_MOVE, 50);
-    pid = computeCurvePID(false);
-    md.setSpeeds(SPEED_RAMP - pid, (SPEED_RAMP / multiplier) + pid);
-  }
-
-  md.setBrakes(400, 400);
-  delay(DELAY_PER_MOVE);
-}
-
 void forward(double cm) {
   double pid;
   int targetTick;
   integral = 0;
   encoderCountLeft = encoderCountRight = prevTick = 0;
   double SPEED_RAMP = 0;
+  int delay_time = DELAY_PER_MOVE;
 
   targetTick = ((cm * 1.16)-1.6) * TICKS_PER_CM; // Caliberated to 30.25 ticks per cm
 
@@ -470,8 +386,10 @@ void forward(double cm) {
   }
 
   md.setBrakes(400, 400);
-  delay(DELAY_PER_MOVE);
+  delay_time = (mode_fastest_path) ? DELAY_PER_MOVE * 2 : DELAY_PER_MOVE;
+  delay(delay_time);
 }
+
 
 
 void reverse(double cm) {
@@ -480,6 +398,7 @@ void reverse(double cm) {
   integral = 0;
   encoderCountLeft = encoderCountRight = prevTick = 0;
   double SPEED_RAMP = 0;
+  int delay_time = DELAY_PER_MOVE;
 
   targetTick = ((cm * 1.1)-1) * TICKS_PER_CM; // Caliberated to 30.25 ticks per cm
 
@@ -507,7 +426,8 @@ void reverse(double cm) {
   }
 
   md.setBrakes(400, 400);
-  delay(DELAY_PER_MOVE);
+  delay_time = (mode_fastest_path) ? DELAY_PER_MOVE * 2 : DELAY_PER_MOVE;
+  delay(delay_time);
 }
 
 void rotateRight(double deg) {
@@ -516,6 +436,7 @@ void rotateRight(double deg) {
   integral = 0;
   encoderCountLeft = encoderCountRight = prevTick = 0;
   double SPEED_RAMP = 0;
+  int delay_time = DELAY_PER_MOVE;
 
   if (deg <= 90) targetTick = deg * TICKS_ROTATE_RIGHT; //4.523 4.375
   else if (deg <= 180 ) targetTick = deg * 4.62;
@@ -546,7 +467,8 @@ void rotateRight(double deg) {
   }
 
   md.setBrakes(400, 400);
-  delay(DELAY_PER_MOVE);
+  delay_time = (mode_fastest_path) ? DELAY_PER_MOVE * 2 : DELAY_PER_MOVE;
+  delay(delay_time);
 }
 
 void rotateLeft(double deg) {
@@ -555,6 +477,7 @@ void rotateLeft(double deg) {
   integral = 0;
   encoderCountLeft = encoderCountRight = prevTick = 0;
   double SPEED_RAMP = 0;
+  int delay_time = DELAY_PER_MOVE;
 
   if (deg <= 90) targetTick = deg * TICKS_ROTATE_LEFT; //4.424;
   else if (deg <= 180 ) targetTick = deg * 4.51;
@@ -585,7 +508,8 @@ void rotateLeft(double deg) {
   }
 
   md.setBrakes(400, 400);
-  delay(DELAY_PER_MOVE);
+  delay_time = (mode_fastest_path) ? DELAY_PER_MOVE * 2 : DELAY_PER_MOVE;
+  delay(delay_time);
 }
 
 /**
@@ -1184,7 +1108,6 @@ bool calibrateWithRight() {
 }
 
 void calibrateAngle(SharpIR sensorL, int arrL, SharpIR sensorR, int arrR, int dist) {
-  Serial.println("Hello");
   mode_calibration = true;
   double distL = calibrateSensorValue(sensorL.distance(), arrL);
   double distR = calibrateSensorValue(sensorR.distance(), arrR);
