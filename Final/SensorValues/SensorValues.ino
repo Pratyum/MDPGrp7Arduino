@@ -161,12 +161,28 @@ SharpIR sensor5(pinSensor5, MODEL_SHORT);
 //double arrMapping5[] = {9.59, 20.89, 33.49, 45.41, 61.24};
 
 // values on 24 mar
-double arrMapping0[] = {18.86, 24.20, 32.40, 41.62, 52.23, 63.15, 75.36, 86.6, 98.4};
-double arrMapping1[] = {10.06, 20.79, 33.96, 59.98, 70.27};
-double arrMapping2[] = {10.08, 20.79, 31.52, 43.43, 50.32};
-double arrMapping3[] = {10.35, 23.12, 38.17, 56.42, 76.63};
-double arrMapping4[] = {10.35, 20.89, 32.39, 45.41, 59.30};
-double arrMapping5[] = {10.00, 20.79, 30.74, 43.43, 53.33};
+//double arrMapping0[] = {18.86, 24.20, 32.40, 41.62, 52.23, 63.15, 75.36, 86.6, 98.4};
+//double arrMapping1[] = {10.06, 20.79, 33.96, 59.98, 70.27};
+//double arrMapping2[] = {10.08, 20.79, 31.52, 43.43, 50.32};
+//double arrMapping3[] = {10.35, 23.12, 38.17, 56.42, 76.63};
+//double arrMapping4[] = {10.35, 20.89, 32.39, 45.41, 59.30};
+//double arrMapping5[] = {10.00, 20.79, 30.74, 43.43, 53.33};
+
+// values on 30 mar
+//double arrMapping0[] = {19.02, 24.53, 33.05, 42.85, 52.99, 64.23, 74.94, 86.6, 98.4};
+//double arrMapping1[] = {10.35, 21.48, 35.69, 57.35, 70.27};
+//double arrMapping2[] = {10.16, 21.17, 33.25, 46.24, 50.32};
+//double arrMapping3[] = {10.97, 21.59, 32.39, 43.43, 53.33};
+//double arrMapping4[] = {9.86, 20.69, 31.95, 46.24, 59.30};
+//double arrMapping5[] = {9.62, 22.33, 39.09, 57.99, 76.63};
+
+// values on 30 mar part 2
+double arrMapping0[] = {18.74, 24.08, 32.29, 42.15, 52.99, 64.23, 74.94, 88.66, 98.4};
+double arrMapping1[] = {10.06, 21.17, 33.02, 48.84, 70.27};
+double arrMapping2[] = {9.73, 20.79, 32.39, 44.60, 50.32};
+double arrMapping3[] = {10.29, 21.27, 32.39, 42.39, 53.33};
+double arrMapping4[] = {10.45, 21.27, 33.49, 45.41, 59.30};
+double arrMapping5[] = {10.24, 22.79, 39.98, 60.67, 76.63};
 
 void setup() {
   Serial.begin(9600);
@@ -175,7 +191,7 @@ void setup() {
 void loop() {
   test();
 //  fastRead(4, 50);
-  delay(500);
+delay(500);
 }
 
 void test() {
@@ -190,14 +206,14 @@ void test() {
   double dist5 = medianDistance(sensor5, sample_size);
   double pepe2 = millis() - pepe1;  // the following gives you the time taken to get the measurement
 
-   double time0 = millis();
-   double distance0 = sensor0.distance();
-   double distance1 = sensor1.distance();
-   double distance2 = sensor2.distance();
-   double distance3 = sensor3.distance();
-   double distance4 = sensor4.distance();
-   double distance5 = sensor5.distance();
-   double end_time0 = millis() - time0;
+  double time0 = millis();
+  double distance0 = sensor0.distance();
+  double distance1 = sensor1.distance();
+  double distance2 = sensor2.distance();
+  double distance3 = sensor3.distance();
+  double distance4 = sensor4.distance();
+  double distance5 = sensor5.distance();
+  double end_time0 = millis() - time0;
 
   
   Serial.print(dist0);
@@ -205,44 +221,44 @@ void test() {
 //  Serial.println("Mapped value is: " + String(calibrateSensorValue(dist0, 0)));
 //  Serial.print(obstaclePosition(dist0));
 //  Serial.print(", ");
-  Serial.print(dist1);
-  Serial.print(", ");
+Serial.print(dist1);
+Serial.print(", ");
 //  Serial.print(obstaclePosition(dist1));
 //  Serial.print(", ");
-  Serial.print(dist2);
-  Serial.print(", ");
+Serial.print(dist2);
+Serial.print(", ");
 //  Serial.print(obstaclePosition(dist2));
 //  Serial.print(", ");
-  Serial.print(dist3);
-  Serial.print(", ");
+Serial.print(dist3);
+Serial.print(", ");
 //  Serial.print(obstaclePosition(dist3));
 //  Serial.print(", ");
-  Serial.print(dist4);
-  Serial.print(", ");
+Serial.print(dist4);
+Serial.print(", ");
 //  Serial.print(obstaclePosition(dist4));
 //  Serial.print(", ");
-  Serial.print(dist5);
+Serial.print(dist5);
 //  Serial.print(", ");
 //  Serial.print(obstaclePosition(dist5));
-  Serial.println();
-  Serial.print(calibrateSensorValue(dist0, 0));
-  Serial.print(", ");
-  Serial.print(calibrateSensorValue(dist1, 1));
-  Serial.print(", ");
-  Serial.print(calibrateSensorValue(dist2, 2));
-  Serial.print(", ");
-  Serial.print(calibrateSensorValue(dist3, 3));
-  Serial.print(", ");
-  Serial.print(calibrateSensorValue(dist4, 4));
-  Serial.print(", ");
-  Serial.print(calibrateSensorValue(dist5, 5));
-  Serial.print(", ");
-  Serial.println();
-  Serial.print("Time taken with median (ms): ");
-  Serial.println(pepe2);
-  Serial.print("Time taken without median (ms): ");
-  Serial.println(end_time0);
-  Serial.println();
+Serial.println();
+Serial.print(calibrateSensorValue(dist0, 0));
+Serial.print(", ");
+Serial.print(calibrateSensorValue(dist1, 1));
+Serial.print(", ");
+Serial.print(calibrateSensorValue(dist2, 2));
+Serial.print(", ");
+Serial.print(calibrateSensorValue(dist3, 3));
+Serial.print(", ");
+Serial.print(calibrateSensorValue(dist4, 4));
+Serial.print(", ");
+Serial.print(calibrateSensorValue(dist5, 5));
+Serial.print(", ");
+Serial.println();
+Serial.print("Time taken with median (ms): ");
+Serial.println(pepe2);
+Serial.print("Time taken without median (ms): ");
+Serial.println(end_time0);
+Serial.println();
 
   //delay(1000);
 }
