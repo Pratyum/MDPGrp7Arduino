@@ -33,15 +33,15 @@
  #define MOTOR_MULTIPLIER 1
 
 // ********** change values here! **********
-#define TICKS_PER_CM 25.8
+#define TICKS_PER_CM 26
 #define TICKS_ROTATE_RIGHT 3.99
 #define TICKS_ROTATE_LEFT 4.05
 
 #define TICKS_ROTATE_RIGHT_45 3.88
 #define TICKS_ROTATE_LEFT_45 3.94
 
-#define STEPS_PER_EXTRA_TICK_FASTEST 160 // (smaller left, bigger right) / (smaller right, bigger left)
-#define STEPS_PER_EXTRA_TICK_EXPLORE 50 // (smaller left, bigger right) / (smaller right, bigger left)
+#define STEPS_PER_EXTRA_TICK_FASTEST 200 // (smaller left, bigger right) / (smaller right, bigger left)
+#define STEPS_PER_EXTRA_TICK_EXPLORE 40 // (smaller left, bigger right) / (smaller right, bigger left)
 
 #define RANGE_OF_LEFT_SENSOR 5
 #define RANGE_OF_FRONT_SENSOR 2
@@ -76,13 +76,13 @@ SharpIR sensorRR(pinSensorRR, MODEL_SHORT);
  * arrMapping0 is for long-range
  * long-range (start from 20); short-range (start from 10)
  */
-// values on 30 mar part 2
-double arrMapping0[] = {18.74, 24.08, 32.29, 42.15, 52.99, 64.23, 74.94, 88.66, 98.4};
-double arrMapping1[] = {10.06, 21.17, 33.02, 48.84, 70.27};
-double arrMapping2[] = {9.73, 20.79, 32.39, 44.60, 50.32};
-double arrMapping3[] = {10.29, 21.27, 32.39, 42.39, 53.33};
-double arrMapping4[] = {10.45, 21.27, 33.49, 45.41, 59.30};
-double arrMapping5[] = {10.24, 22.79, 39.98, 60.67, 76.63};
+// values on 31 mar
+double arrMapping0[] = {18.76, 24.09, 32.29, 42.15, 52.99, 64.23, 74.94, 88.66, 98.4};
+double arrMapping1[] = {10.06, 21.48, 34.70, 52.78, 70.27};
+double arrMapping2[] = {10.14, 20.99, 32.61, 44.60, 50.32};
+double arrMapping3[] = {10.82, 21.38, 32.61, 42.76, 53.33};
+double arrMapping4[] = {10.16, 20.89, 32.61, 45.41, 59.30};
+double arrMapping5[] = {9.98, 22.79, 39.09, 64.21, 76.63};
 
 /**
  * ============================== Initiate global variables ==============================
@@ -290,7 +290,7 @@ if (flag) {
 		// check if command was action, calibrate if yes
 		if (mode_fastest_path) {
 			if ((!mode_fastest_diagonal) && (Serial.available())) {
-				//autoCalibrate(1);
+//				autoCalibrate(1);
 			}
 		}
 		else {
@@ -308,9 +308,7 @@ if (flag) {
 	else {
 		delay(10);
 		if (!Serial.available()) {
-			if (!mode_fastest_diagonal) {
-				// calibrateDistance(sensorFC, 2);	
-			}
+//			calibrateDistance(sensorFC, 2);
 		}
 	}
 	digitalWrite(pinGreenLED, HIGH);
