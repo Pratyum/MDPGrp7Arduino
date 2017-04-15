@@ -37,7 +37,7 @@ https://github.com/GreyGnome/PinChangeInt/
 - First zip all the library files and then include in your arduino. ( note that some of the library files have been changed to implement floating point) 
 - Run any of the arduino files. 
 - If you are using Final/Compilation then use the serial monitor to try the following commands 
-`F - Forward (1 block)
+```F - Forward (1 block)
  F{1-9} - Move 1 to 9 blocks
  B - Backward (1 block)
  B{1-9} - Move 1 to 9 blocks
@@ -47,7 +47,7 @@ https://github.com/GreyGnome/PinChangeInt/
  R{0-360} - Rotate right 0-360˚
  X - Caliberate to front wall
  C - Caliberate to right wall
- `
+ ```
  
  ## Contribution methods
 1. Fork it!
